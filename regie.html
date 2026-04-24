@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Regie-Rapport</title>
+  <link rel="icon" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <meta name="theme-color" content="#F5C400" />
+
+  <style>
+    /* ── Basis ──────────────────────────────────────────────────────────── */
+    :root{
+      --zentex-yellow:#F5C400;
+      --bg:#f4f4f4;
+      --card:#ffffff;
+      --muted:#6b6b6b;
+      --line:#e6e6e6;
+      --soft:#fafafa;
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,Arial; background:var(--bg); padding:10px; margin:0;}
+    .container{
+      background:var(--card); max-width:900px; margin:auto; padding:15px;
+      border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,.08);
+    }
+    .header{
+      border-bottom:3px solid var(--zentex-yellow);
+      padding-bottom:10px; margin-bottom:15px;
+      display:flex; justify-content:space-between; align-items:flex-end; gap:10px;
+    }
+    .address{font-size:.75em; color:#555; line-height:1.3;}
+    .section-title{
+      background:#eee; padding:10px; font-weight:1000;
+      margin:15px 0 10px; border-left:5px solid var(--zentex-yellow);
+      font-size:.9em; text-transform:uppercase;
+    }
+    label{font-size:.8em; font-weight:1000; color:#555; display:block;}
+    input,select,textarea{
+      width:100%; padding:10px; border:1px solid #ccc; border-radius:10px;
+      font-size:16px; margin-bottom:5px; background:#fff;
+    }
+    textarea{resize:none; overflow:hidden; min-height:88px; line-height:1.35;}
+
+    .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px;}
+
+    .btn-zentex{
+      background:var(--zentex-yellow); color:#000; border:none;
+      padding:14px 15px; width:100%; font-weight:1100;
+      border-radius:12px; cursor:pointer; margin-top:10px;
+    }
+    .btn-muted{
+      background:#d9d9d9; color:#000; border:none;
+      padding:12px 15px; width:100%; font-weight:1100;
+      border-radius:12px; cursor:pointer; margin-top:10px;
+    }
+    .zuschlag-info{font-size:.72em; color:#777; margin-top:6px; font-style:italic;}
+
+    /* ── Termin & Auftrag ───────────────────────────────────────────────── */
+    .auftrag-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    .auftrag-grid .full{grid-column:1/-1;}
+    .date-kw-wrap{display:grid; grid-template-columns:1fr 130px; gap:10px; align-items:end;}
+    .kw-field input{text-align:center; font-weight:1100; font-size:18px; padding:10px 8px; background:#fff;}
+    .form-row.two{
+      grid-column:1/-1; display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; width:100%;
+    }
+    .form-row.two>div{min-width:0;}
+
+    /* ── Desktop time table ─────────────────────────────────────────────── */
+    .table-wrap{overflow-x:auto;}
+    table{width:100%; border-collapse:collapse; min-width:780px;}
+    th,td{border:1px solid #ddd; padding:6px 4px; text-align:center;}
+    th{font-size:.72em; background:#f8f8f8;}
+    .day-input{width:100%; border:none; text-align:center; background:transparent; padding:8px 4px;}
+    .total-field{
+      background:#fff3b0; border:2px solid var(--zentex-yellow);
+      text-align:center; font-weight:1100; border-radius:12px; padding:8px 6px; width:100%;
+    }
+
+    /* Desktop: Z-Button ------------------------------------------------- */
+    .z-btn{
+      background:#333; color:#fff; border:none; border-radius:8px;
+      padding:5px 9px; font-weight:900; cursor:pointer;
+      font-size:.78em; white-space:nowrap; line-height:1; flex-shrink:0;
+    }
+    .z-btn.active{background:var(--zentex-yellow); color:#000;}
+
+    /* Desktop: Zuschlag sub-row */
+    .zuschlag-row td{background:#fffbea; border-color:#f0d84a; padding:3px 4px !important;}
+    .zuschlag-row td:first-child{
+      font-size:.7em; color:#b57c00; font-weight:900;
+      text-align:left; padding-left:6px !important;
+    }
+    .zuschlag-sel{
+      width:100%; padding:3px 2px; border-radius:6px; border:1px solid #ddd;
+      font-size:.75em; background:#fff; margin:0; cursor:pointer;
+    }
+
+    /* Desktop: Delete button */
+    .del-btn{
+      background:#ffe0e0; color:#c00; border:1px solid #f7c0c0;
+      border-radius:8px; padding:5px 8px; cursor:pointer;
+      font-size:.73em; font-weight:900; white-space:nowrap;
+    }
+    .del-btn:hover{background:#ffc8c8;}
+
+    /* ── Row-actions / Grand-Total ──────────────────────────────────────── */
+    .row-actions{
+      display:flex; justify-content:space-between; align-items:center;
+      margin-top:10px; gap:10px; flex-wrap:wrap;
+    }
+    .add-mini{
+      background:var(--zentex-yellow); border:none; color:#000;
+      padding:10px 14px; border-radius:999px; font-weight:1100; cursor:pointer;
+    }
+    .grandtotal-box{display:flex; align-items:center; gap:10px; font-weight:1100; white-space:nowrap;}
+    .grandtotal-box input{
+      width:180px; text-align:center; font-weight:1100;
+      background:#fff3b0; border:2px solid var(--zentex-yellow);
+      border-radius:12px; margin-bottom:0;
+    }
+
+    /* ── Mobile / Desktop switch ────────────────────────────────────────── */
+    .mobile-only{display:none;}
+    .desktop-only{display:block;}
+
+    /* ── Mobile employee cards ──────────────────────────────────────────── */
+    .emp-card{
+      border:1px solid var(--line); border-radius:14px; padding:12px;
+      background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:12px;
+    }
+    .emp-head{
+      display:flex; gap:10px; align-items:flex-end;
+      justify-content:space-between; margin-bottom:10px;
+    }
+    .emp-head .name{flex:1;}
+    .emp-head .total{width:180px; min-width:180px;}
+    .emp-days{display:flex; flex-direction:column; gap:8px;}
+
+    /* Mobile day-row: flex column, so zuschlag-panel drops below */
+    .day-row{
+      display:flex; flex-direction:column;
+      background:var(--soft); border:1px solid var(--line);
+      border-radius:12px; padding:10px;
+    }
+    .day-row-main{
+      display:grid;
+      grid-template-columns:80px 1fr 44px;
+      gap:10px; align-items:center;
+    }
+    .day-left{display:flex; flex-direction:column; gap:2px; line-height:1.1;}
+    .day-left .dow{font-weight:1100; color:#222;}
+    .day-left .date{font-size:.78em; color:var(--muted); font-weight:900;}
+
+    .stepper{
+      display:grid;
+      grid-template-columns:48px minmax(64px,1fr) 48px;
+      gap:10px; align-items:center;
+    }
+    .stepper button{
+      border:none; border-radius:12px; font-weight:1200;
+      padding:10px 0; cursor:pointer; background:#e9e9e9;
+    }
+    .stepper button:active{transform:scale(.98);}
+    .stepper input{
+      margin:0; padding:14px 10px; min-width:0;
+      text-align:center; font-weight:1100; font-size:1.08em;
+      border-radius:12px; border:1px solid #d8d8d8; background:#fff;
+    }
+
+    /* Mobile: Z-Button per day */
+    .z-btn-mobile{
+      background:#333; color:#fff; border:none; border-radius:10px;
+      padding:10px 0; font-weight:900; cursor:pointer;
+      font-size:.85em; width:100%; line-height:1;
+    }
+    .z-btn-mobile.active{background:var(--zentex-yellow); color:#000;}
+
+    /* Mobile: Zuschlag panel */
+    .zuschlag-panel{
+      display:none; gap:6px; flex-wrap:wrap;
+      padding:8px 4px 4px; margin-top:6px;
+    }
+    .zuschlag-panel.open{display:flex;}
+    .zs-opt{
+      border:1px solid #ddd; border-radius:10px; padding:8px 14px;
+      background:#fff; cursor:pointer; font-size:.82em; font-weight:900; color:#333;
+    }
+    .zs-opt.selected{background:var(--zentex-yellow); border-color:#c9a500; color:#000;}
+    .zs-clear{
+      border:1px solid #f5c0c0; border-radius:10px; padding:8px 14px;
+      background:#fff5f5; cursor:pointer; font-size:.82em; font-weight:900; color:#c00;
+    }
+
+    /* Mobile: Delete button */
+    .del-btn-mobile{
+      background:#fff0f0; color:#c00; border:1px solid #f5c0c0;
+      border-radius:10px; padding:10px; cursor:pointer;
+      font-weight:900; font-size:.85em; width:100%; margin-top:10px;
+    }
+    .del-btn-mobile:active{background:#ffe0e0;}
+
+    /* ── Signatures ─────────────────────────────────────────────────────── */
+    .sig-container{
+      position:relative; width:100%; height:220px;
+      background:#fff; border:2px solid #999;
+      touch-action:none; border-radius:12px; margin-top:6px;
+    }
+    canvas{width:100%; height:100%; touch-action:none;}
+    .sig-tools{display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;}
+    .sig-tools button{
+      border:none; border-radius:10px; padding:10px 12px;
+      font-weight:1000; background:#e9e9e9; cursor:pointer;
+    }
+
+    /* ── Vollbild-Unterschrift ──────────────────────────────────────────── */
+    .modal{position:fixed; inset:0; display:none; z-index:9999; touch-action:none; overflow:hidden;}
+    .modal.show{display:flex;}
+    .modal-panel{background:#fff; width:100%; height:100%; display:flex; flex-direction:column;}
+    @media (orientation:portrait){
+      .modal.show .modal-panel{
+        width:100vh; height:100vw; position:absolute;
+        top:calc((100vh - 100vw)/2); left:calc((100vw - 100vh)/2);
+        transform:rotate(90deg); transform-origin:center center;
+      }
+    }
+    .modal-bar{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      padding:10px; border-bottom:2px solid var(--line); flex:0 0 auto;
+    }
+    .modal-title{font-weight:1100; font-size:1.05em; white-space:nowrap;}
+    .modal-actions{display:flex; gap:8px; flex-wrap:nowrap;}
+    .modal-actions button{
+      border:none; border-radius:10px; padding:10px 14px;
+      font-weight:1100; cursor:pointer; white-space:nowrap;
+    }
+    .btn-yellow{background:var(--zentex-yellow);}
+    .btn-grey{background:#e9e9e9;}
+    .modal-canvas-wrap{flex:1; display:flex; padding:8px; min-height:0;}
+    #sigModalCanvas{
+      flex:1; display:block; width:100%; height:100%;
+      border:2px solid #333; border-radius:12px; background:#fff;
+      touch-action:none; cursor:crosshair;
+    }
+
+    /* Drehhinweis */
+    .rotate-hint{
+      display:none; position:fixed; inset:0; z-index:10000;
+      background:rgba(17,17,17,.85); color:#fff;
+      align-items:center; justify-content:center; flex-direction:column;
+      gap:14px; font-size:15px; font-weight:800; text-align:center;
+      padding:24px; pointer-events:none;
+    }
+    .rotate-hint.visible{display:flex;}
+    @media (pointer:fine){.rotate-hint{display:none !important;}}
+    .rotate-hint .rh-icon{font-size:52px; animation:rhspin 1.2s ease-in-out infinite alternate;}
+    @keyframes rhspin{from{transform:rotate(-18deg)} to{transform:rotate(18deg)}}
+
+    /* ── Responsive ─────────────────────────────────────────────────────── */
+    @media (max-width:720px){
+      .container{padding:12px;}
+      .desktop-only{display:none;}
+      .mobile-only{display:block;}
+      .row-actions{flex-direction:column; align-items:stretch;}
+      .grandtotal-box{justify-content:space-between;}
+      .auftrag-grid{grid-template-columns:1fr;}
+      .grid.sign-grid{grid-template-columns:1fr !important;}
+      .sig-container{height:260px;}
+      .day-row{padding:10px 8px;}
+      .day-row-main{grid-template-columns:72px 1fr 44px; gap:10px;}
+      .stepper{grid-template-columns:48px minmax(64px,1fr) 48px; gap:10px; padding:0 2px;}
+      .stepper button{padding:10px 0;}
+      .stepper input{padding:14px 10px; font-size:1.08em;}
+      .z-btn-mobile{padding:10px 0;}
+    }
+    @media (max-width:420px){
+      .day-row-main{grid-template-columns:66px 1fr 42px; gap:8px;}
+      .stepper{grid-template-columns:44px minmax(58px,1fr) 44px; gap:8px;}
+      .stepper button{padding:9px 0;}
+      .stepper input{padding:13px 8px; font-size:1.02em;}
+      .z-btn-mobile{padding:9px 0; font-size:.82em;}
+    }
+  </style>
+
+  <script>
+    /* ── Auftragsleiter lookup ───────────────────────────────────────────── */
+        const TEAM = {
+ 	 "antonio.talerico@zentex.ch": "Antonio Talerico",
+ 	 "bojan.studen@zentex.ch": "Bojan Studen",
+  	"carmen.trombelli@zentex.ch": "Carmen Trombelli",
+	  "fabian.maissen@zentex.ch": "Fabian Maissen",
+	  "jean-paul.fekete@zentex.ch": "Jean-Paul Fekete",
+	  "jose.rodriguez@zentex.ch": "José Eduardo Rodriguez",
+ 	 "kaj.furmanski@zentex.ch": "Kaj Furmanski",
+ 	 "kerstin.schibli@zentex.ch": "Kerstin Schibli",
+ 	 "marco.seeberger@zentex.ch": "Marco Seeberger",
+ 	 "michael.weber@zentex.ch": "Michael Weber",
+ 	 "michal.jancovic@zentex.ch": "Michal Jancovic",
+	  "nenad.vukov@zentex.ch": "Nenad Vukov",
+	  "remo.dellanno@zentex.ch": "Remo Dell’Anno",
+ 	 "roland.haenni@zentex.ch": "Roland Hänni"
+	};
+	
+	console.log("TEAM loaded", TEAM);
+    
+function onAuftragsleiterChange(){
+      const mail = document.getElementById("auftragsleiter").value;
+      document.getElementById("auftragsleiterMail").value = mail;
+      if (typeof saveDraftSoon === "function") saveDraftSoon();
+    }
+  </script>
+<!-- ✅ ADDED – SharePoint REST API Modul -->
+<script src="./zentex-sp.js" defer></script>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <div>
+        <strong style="font-size:1.2em;">ZENTEX BRANDSCHUTZ AG</strong>
+        <div class="address">Hofmattstrasse 9, 5432 Neuenhof<br>Tel. 056 416 20 30 | <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="274e494148675d424953425f09444f">[email&#160;protected]</a></div>
+      </div>
+      <div style="text-align:right;">
+        <div id="netStatus" style="font-size:.7em; font-weight:1100;">Netz: prüfen...</div>
+        <div style="font-weight:1100; font-size:1.1em;">Regie-Rapport</div>
+      </div>
+    </div>
+
+    <!-- Kunden & Standort -->
+    <div class="section-title">Kunden- &amp; Standortdaten</div>
+    <div class="grid">
+      <div><label>Gebäude</label><input type="text" id="gebaeude" placeholder="z.B. EKZ Tivoli"></div>
+      <div><label>Kunde</label><input type="text" id="kunde" placeholder="z.B. JUST International AG"></div>
+      <div><label>Strasse</label><input type="text" id="strasse" placeholder="Strasse / Nr."></div>
+      <div><label>PLZ / Ort</label><input type="text" id="ort" placeholder="PLZ / Ort"></div>
+    </div>
+
+    <!-- Termin & Auftrag -->
+    <div class="section-title">Termin &amp; Auftrag</div>
+    <div class="auftrag-grid">
+      <div class="date-kw-wrap full">
+        <div>
+          <label>Datum</label>
+          <input type="date" id="datum" onchange="updateDates(true)">
+        </div>
+        <div class="kw-field">
+          <label>KW</label>
+          <input type="text" id="kw" readonly>
+        </div>
+      </div>
+      <div>
+        <label>Art der Arbeiten</label>
+        <select id="artArbeit" onchange="handleKS()">
+          <option value="3100">Auftrag Pauschal</option>
+          <option value="3200" selected>Auftrag Regie</option>
+          <option value="3200">Pikett-Einsatz</option>
+          <option value="3300">Service</option>
+          <option value="3500">Garantie</option>
+          <option value="FREE">Hauptauftrag</option>
+          <option value="FREE">Generalüberholung</option>
+        </select>
+      </div>
+      <div>
+        <label>Kostenstelle</label>
+        <input type="text" id="ks" value="3200" style="background:#f9f9f9;" readonly>
+      </div>
+      <div class="form-row two">
+        <div>
+          <label for="auftragsNr">Auftrags-Nr.</label>
+          <input type="text" id="auftragsNr">
+        </div>
+        <div>
+          <label for="auftragsleiter">Auftragsleiter</label>
+          <select id="auftragsleiter" onchange="onAuftragsleiterChange()">
+            <option value="">Bitte wählen</option>
+            	<option value="antonio.talerico@zentex.ch">Antonio Talerico</option>
+		<option value="bojan.studen@zentex.ch">Bojan Studen</option>
+		<option value="carmen.trombelli@zentex.ch">Carmen Trombelli</option>
+		<option value="fabian.maissen@zentex.ch">Fabian Maissen</option>
+		<option value="jean-paul.fekete@zentex.ch">Jean-Paul Fekete</option>
+		<option value="jose.rodriguez@zentex.ch">José Eduardo Rodriguez</option>
+		<option value="kaj.furmanski@zentex.ch">Kaj Furmanski</option>
+		<option value="kerstin.schibli@zentex.ch">Kerstin Schibli</option>
+		<option value="marco.seeberger@zentex.ch">Marco Seeberger</option>
+		<option value="michael.weber@zentex.ch">Michael Weber</option>
+		<option value="michal.jancovic@zentex.ch">Michal Jancovic</option>
+		<option value="nenad.vukov@zentex.ch">Nenad Vukov</option>
+		<option value="remo.dellanno@zentex.ch">Remo Dell’Anno</option>
+		<option value="roland.haenni@zentex.ch">Roland Hänni</option>
+          </select>
+        </div>
+      </div>
+      <input type="hidden" id="auftragsleiterMail" name="auftragsleiterMail">
+    </div>
+
+    <!-- Arbeitszeit -->
+    <div class="section-title">Arbeitszeit-Erfassung</div>
+
+    <!-- Desktop table (rows created by JS) -->
+    <div class="desktop-only">
+      <div class="table-wrap">
+        <table id="zeitTable">
+          <thead>
+            <tr>
+              <th style="min-width:155px;">Mitarbeiter/in</th>
+              <th>Mo<br><small id="d0">-</small></th>
+              <th>Di<br><small id="d1">-</small></th>
+              <th>Mi<br><small id="d2">-</small></th>
+              <th>Do<br><small id="d3">-</small></th>
+              <th>Fr<br><small id="d4">-</small></th>
+              <th>Sa<br><small id="d5">-</small></th>
+              <th>So<br><small id="d6">-</small></th>
+              <th>Total</th>
+              <th style="width:68px;"></th>
+            </tr>
+          </thead>
+          <tbody id="zeitBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Mobile cards -->
+    <div class="mobile-only" id="mobileEmpList"></div>
+
+    <div class="row-actions">
+      <button type="button" class="add-mini" onclick="addRow()">+ Mitarbeiter hinzufügen</button>
+      <div class="grandtotal-box">
+        <span>Total Stunden:</span>
+        <input type="text" id="grandTotalTop" readonly value="0.00">
+      </div>
+    </div>
+    <div class="zuschlag-info">1) 17:00 - 23:00 Uhr +25%  |  2) 23:00 - 06:00 / Samstag +50%  |  3) Sonntag / Feiertage +100%</div>
+
+    <!-- Bericht & Material -->
+    <div class="section-title">Bericht &amp; Material</div>
+    <label>Ausgeführte Arbeiten</label>
+    <textarea id="bericht" rows="3" placeholder="Beschreibung der Tätigkeit..."></textarea>
+    <label>Material aus Fahrzeug</label>
+    <textarea id="material" rows="3" placeholder="Stk. / Artikel..."></textarea>
+    <div class="grid" style="margin-top:10px;">
+      <div><label>Lieferschein-Nr.</label><input type="text" id="lieferschein"></div>
+      <div><label>Wegentschädigung (KM)</label><input type="text" id="wegKM" placeholder="von &lt;-&gt; nach / KM"></div>
+    </div>
+
+    <div class="section-title">Bemerkungen</div>
+    <textarea id="bemerkungen" rows="2"></textarea>
+
+    <!-- Unterschrift -->
+    <div class="section-title">Abschluss &amp; Unterschrift</div>
+    <div class="grid sign-grid">
+      <div>
+        <label>Unternehmer (ZENTEX)</label>
+        <input type="text" id="nameMonteur" placeholder="Name Monteur">
+        <label>Datum</label>
+        <input type="date" id="datumMonteur">
+        <div class="sig-container"><canvas id="canvasMonteur"></canvas></div>
+        <div class="sig-tools">
+          <button type="button" onclick="openSigModal('monteur')">Vollbild unterschreiben</button>
+          <button type="button" onclick="clearSignature('canvasMonteur')">Signatur löschen</button>
+        </div>
+      </div>
+      <div>
+        <label>Kunde / Bauherr</label>
+        <input type="text" id="nameKunde" placeholder="Name Kunde">
+        <input type="email" id="emailKunde" placeholder="E-Mail für PDF-Versand">
+        <label>Datum</label>
+        <input type="date" id="datumKunde">
+        <div class="sig-container"><canvas id="canvasKunde"></canvas></div>
+        <div class="sig-tools">
+          <button type="button" onclick="openSigModal('kunde')">Vollbild unterschreiben</button>
+          <button type="button" onclick="clearSignature('canvasKunde')">Signatur löschen</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-muted" onclick="goBack()">← Zurück</button>
+    <button class="btn-muted" onclick="clearAll()" style="background:#ffe0e0;color:#c00;">🗑 Formular leeren</button>
+    <button class="btn-zentex" style="padding:20px;font-size:1.2em;" onclick="saveAndSend()">RAPPORT ABSCHLIESSEN &amp; SENDEN</button>
+  </div>
+
+  <!-- Drehhinweis -->
+  <div class="rotate-hint" id="rotateHint">
+    <div class="rh-icon">📱</div>
+    <div>Handy drehen für mehr Platz –<br>oder einfach unterschreiben,<br>das Feld ist bereits quer.</div>
+  </div>
+
+  <!-- Vollbild-Unterschrift -->
+  <div class="modal" id="sigModal">
+    <div class="modal-panel">
+      <div class="modal-bar">
+        <div class="modal-title" id="sigModalTitle">Unterschrift</div>
+        <div class="modal-actions">
+          <button class="btn-grey"   type="button" onclick="modalClear()">Leeren</button>
+          <button class="btn-grey"   type="button" onclick="closeSigModal(false)">Abbrechen</button>
+          <button class="btn-yellow" type="button" onclick="closeSigModal(true)">✓ Speichern</button>
+        </div>
+      </div>
+      <div class="modal-canvas-wrap">
+        <canvas id="sigModalCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+    /* ═══════════════════════════════════════════════════════════════════════
+       REGIE V3 – JavaScript
+       Architektur : v2  (row-factory, zuschlagData, empId-System)
+       Save/Restore: v2  (mit zuschlag, vollständige Draft-Logik aus v1)
+       Berechnung  : Zeilen-Total = Rohstunden | Grand-Total = mit Zuschlag
+    ═══════════════════════════════════════════════════════════════════════ */
+
+    const JOBS_KEY   = "zentex_offline_jobs_v1";
+    const DRAFT_KEY  = "zentex_regie_draft_v1";
+    const MAX_JOBS   = 50;
+    const STEP_HOURS = 0.25;
+
+    /* ── Zuschlag state ─────────────────────────────────────────────────── */
+    let nextEmpId    = 0;
+    let zuschlagData = {};   // key: "empId_dayIdx"  value: ''|'night1'|'night2'|'feiertag'
+
+    // Automatische Tages-Multiplikatoren: Mo–Fr = 1.0, Sa = 1.5, So = 2.0
+    const DAY_AUTO_MULT = [1, 1, 1, 1, 1, 1.5, 2];
+
+    function getZuschlagMultiplier(empId, dayIdx){
+      const autoMult = DAY_AUTO_MULT[dayIdx] ?? 1;
+      const z = zuschlagData[empId + '_' + dayIdx] || '';
+      const zMult = (z === 'night1') ? 1.25 : (z === 'night2') ? 1.5 : (z === 'feiertag') ? 2 : 1;
+      return Math.max(autoMult, zMult);
+    }
+
+    /* ── Typing guard (verhindert Fokus-Verlust bei Mobile-Keyboard) ────── */
+    let isTyping = false;
+    document.addEventListener('focusin', (e)=>{
+      const t = e.target;
+      if (t && (t.tagName==='INPUT' || t.tagName==='TEXTAREA' || t.isContentEditable)) isTyping = true;
+    });
+    document.addEventListener('focusout', (e)=>{
+      const t = e.target;
+      if (t && (t.tagName==='INPUT' || t.tagName==='TEXTAREA' || t.isContentEditable)){
+        setTimeout(()=>{
+          const a = document.activeElement;
+          isTyping = !!(a && (a.tagName==='INPUT' || a.tagName==='TEXTAREA' || a.isContentEditable));
+        }, 50);
+      }
+    });
+
+    /* ── Hilfs-Funktionen ───────────────────────────────────────────────── */
+    function parseNum(v){
+      const s = (v||"").toString().trim().replace(",",".");
+      const n = parseFloat(s);
+      return isNaN(n) ? 0 : n;
+    }
+    function format2(n){ return (Math.round(n*100)/100).toFixed(2); }
+    function val(id)    { return document.getElementById(id)?.value ?? ""; }
+    function setVal(id, v){
+      const el = document.getElementById(id);
+      if (el) el.value = v ?? "";
+    }
+
+    function escapeHtml(s){
+      return (s??'').toString()
+        .replaceAll('&','&amp;').replaceAll('<','&lt;')
+        .replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+    }
+
+    /* ── Netz-Status ────────────────────────────────────────────────────── */
+    function updateNetStatus(){
+      const el = document.getElementById('netStatus');
+      el.innerText = "Netz: " + (navigator.onLine ? "online" : "offline");
+      el.style.color = navigator.onLine ? "green" : "red";
+    }
+
+    /* ── Datum / KW ─────────────────────────────────────────────────────── */
+    function updateDates(syncSigDates=false){
+      const dateVal = document.getElementById('datum').value;
+      const d = new Date(dateVal);
+      if (isNaN(d)) return;
+
+      // ISO-KW
+      const tdt  = new Date(d.valueOf());
+      const dayn = (d.getDay()+6)%7;
+      tdt.setDate(tdt.getDate()-dayn+3);
+      const firstDay = new Date(tdt.getFullYear(),0,4);
+      const kw = 1 + Math.ceil((tdt - firstDay.getTime())/604800000);
+      document.getElementById('kw').value = kw;
+
+      // Wochentage Mo–So
+      const mon = new Date(d);
+      mon.setDate(d.getDate()-dayn);
+      for (let i=0;i<7;i++){
+        const curr = new Date(mon);
+        curr.setDate(mon.getDate()+i);
+        const el = document.getElementById('d'+i);
+        if (el) el.innerText = curr.toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit'});
+      }
+
+      if (syncSigDates){
+        if (!document.getElementById('datumMonteur').value) setVal('datumMonteur', dateVal);
+        if (!document.getElementById('datumKunde').value)   setVal('datumKunde',   dateVal);
+      }
+
+      renderMobileFromDesktop();
+      saveDraftSoon();
+    }
+
+    /* ── Kostenstelle ───────────────────────────────────────────────────── */
+    function handleKS(){
+      const sel = document.getElementById('artArbeit');
+      const ks  = document.getElementById('ks');
+      ks.value    = (sel.value==="FREE") ? "" : sel.value;
+      ks.readOnly = (sel.value!=="9314" && sel.value!=="FREE");
+      ks.style.background = ks.readOnly ? "#f9f9f9" : "#fff";
+      saveDraftSoon();
+    }
+
+    function formatDay(inputEl){
+      const v = inputEl.value.trim();
+      if (v==="") return;
+      inputEl.value = format2(parseNum(v));
+    }
+
+    /* ═══ DESKTOP ROW FACTORY ═══════════════════════════════════════════ */
+    function createEmpRow(empId){
+      const tr = document.createElement('tr');
+      tr.className     = 'emp-row';
+      tr.dataset.empId = empId;
+
+      // Name-Zelle + Z-Button
+      const tdName   = document.createElement('td');
+      tdName.style.textAlign = 'left';
+      const nameWrap = document.createElement('div');
+      nameWrap.style.cssText = 'display:flex;gap:4px;align-items:center;';
+
+      const nameInput = document.createElement('input');
+      nameInput.type        = 'text';
+      nameInput.className   = 'emp-name-input';
+      nameInput.placeholder = 'Name';
+      nameInput.style.cssText = 'margin:0;flex:1;min-width:0;';
+      nameInput.addEventListener('input', ()=>{ syncMobileFromDesktop(); saveDraftSoon(); });
+
+      const zBtn = document.createElement('button');
+      zBtn.type        = 'button';
+      zBtn.className   = 'z-btn';
+      zBtn.textContent = 'Z';
+      zBtn.title       = 'Zuschlag anzeigen/verbergen';
+      zBtn.addEventListener('click', ()=> toggleZuschlagRow(empId));
+
+      nameWrap.appendChild(nameInput);
+      nameWrap.appendChild(zBtn);
+      tdName.appendChild(nameWrap);
+      tr.appendChild(tdName);
+
+      // 7 Tages-Inputs
+      for (let i=0; i<7; i++){
+        const td  = document.createElement('td');
+        const inp = document.createElement('input');
+        inp.type      = 'text';
+        inp.className = 'day-input';
+        inp.inputMode = 'numeric';
+        inp.pattern   = '[0-9]*';
+        inp.addEventListener('input', ()=> calculateTotal(inp));
+        inp.addEventListener('blur',  ()=>{ formatDay(inp); calculateTotal(inp); });
+        td.appendChild(inp);
+        tr.appendChild(td);
+      }
+
+      // Total-Zelle (Rohstunden)
+      const tdTotal  = document.createElement('td');
+      const totalInp = document.createElement('input');
+      totalInp.type      = 'text';
+      totalInp.className = 'total-field';
+      totalInp.readOnly  = true;
+      totalInp.value     = '0.00';
+      tdTotal.appendChild(totalInp);
+      tr.appendChild(tdTotal);
+
+      // Löschen-Zelle
+      const tdDel  = document.createElement('td');
+      const delBtn = document.createElement('button');
+      delBtn.type        = 'button';
+      delBtn.className   = 'del-btn';
+      delBtn.textContent = 'Löschen';
+      delBtn.addEventListener('click', ()=> removeRow(empId));
+      tdDel.appendChild(delBtn);
+      tr.appendChild(tdDel);
+
+      return tr;
+    }
+
+    function createZuschlagRow(empId){
+      const tr = document.createElement('tr');
+      tr.className      = 'zuschlag-row';
+      tr.id             = 'zuschlag-row-' + empId;
+      tr.style.display  = 'none';
+
+      const tdLabel = document.createElement('td');
+      tdLabel.textContent = 'Zuschlag';
+      tr.appendChild(tdLabel);
+
+      for (let i=0; i<7; i++){
+        const td  = document.createElement('td');
+        const sel = document.createElement('select');
+        sel.className       = 'zuschlag-sel';
+        sel.dataset.empId   = empId;
+        sel.dataset.day     = i;
+        sel.innerHTML       = `
+          <option value="">–</option>
+          <option value="night1">17–23</option>
+          <option value="night2">23–06</option>
+          <option value="feiertag">F</option>`;
+        sel.addEventListener('change', ()=> onZuschlagChange(sel));
+        td.appendChild(sel);
+        tr.appendChild(td);
+      }
+      // Spacer für Total + Löschen
+      tr.appendChild(document.createElement('td'));
+      tr.appendChild(document.createElement('td'));
+      return tr;
+    }
+
+    /* ═══ ZUSCHLAG LOGIK ════════════════════════════════════════════════ */
+    function toggleZuschlagRow(empId){
+      const zRow  = document.getElementById('zuschlag-row-' + empId);
+      if (!zRow) return;
+      const isHidden = (zRow.style.display==='none' || zRow.style.display==='');
+      zRow.style.display = isHidden ? 'table-row' : 'none';
+      const empRow = document.querySelector(`#zeitBody .emp-row[data-emp-id="${empId}"]`);
+      if (empRow){
+        const btn = empRow.querySelector('.z-btn');
+        if (btn) btn.classList.toggle('active', isHidden);
+      }
+    }
+
+    function onZuschlagChange(sel){
+      const empId  = parseInt(sel.dataset.empId, 10);
+      const dayIdx = parseInt(sel.dataset.day,   10);
+      zuschlagData[empId+'_'+dayIdx] = sel.value;
+
+      const empRow = document.querySelector(`#zeitBody .emp-row[data-emp-id="${empId}"]`);
+      if (empRow) calculateTotalByRow(empRow);
+      calculateGrandTotal();
+      renderMobileFromDesktop();   // safe: kein Text-Input involviert
+      saveDraftSoon();
+    }
+
+    /* ═══ TOTAL-BERECHNUNGEN ════════════════════════════════════════════
+       Zeilen-Total = nur Rohstunden (für Rapport-Anzeige)
+       Grand-Total  = Rohstunden × Zuschlag-Faktor (unten rechts)
+    ════════════════════════════════════════════════════════════════════ */
+    function calculateTotalByRow(empRow){
+      // Nur Rohstunden – kein Multiplikator
+      const inputs = empRow.querySelectorAll('.day-input');
+      let sum = 0;
+      inputs.forEach(inp => sum += parseNum(inp.value));
+      empRow.querySelector('.total-field').value = format2(sum);
+    }
+
+    function calculateTotal(el){
+      const empRow = el.closest('.emp-row');
+      if (!empRow) return;
+      calculateTotalByRow(empRow);
+      calculateGrandTotal();
+      if (!isTyping) renderMobileFromDesktop();
+      saveDraftSoon();
+    }
+
+    function calculateGrandTotal(){
+      // Rohstunden × Zuschlag-Faktor pro Tag, über alle Mitarbeiter summiert
+      let grand = 0;
+      document.querySelectorAll('#zeitBody .emp-row').forEach(empRow => {
+        const empId = parseInt(empRow.dataset.empId, 10);
+        empRow.querySelectorAll('.day-input').forEach((inp, dayIdx)=>{
+          grand += parseNum(inp.value) * getZuschlagMultiplier(empId, dayIdx);
+        });
+      });
+      document.getElementById('grandTotalTop').value = format2(grand);
+    }
+
+    /* ═══ ROW MANAGEMENT ════════════════════════════════════════════════ */
+    function addRow(){
+      const body  = document.getElementById('zeitBody');
+      const empId = nextEmpId++;
+      body.appendChild(createEmpRow(empId));
+      body.appendChild(createZuschlagRow(empId));
+      calculateGrandTotal();
+      renderMobileFromDesktop();
+      saveDraftSoon();
+    }
+
+    function removeRow(empId){
+      const body    = document.getElementById('zeitBody');
+      const empRows = body.querySelectorAll('.emp-row');
+      if (empRows.length <= 1){
+        alert('Mindestens ein Mitarbeiter muss eingetragen bleiben.');
+        return;
+      }
+      const empRow = body.querySelector(`.emp-row[data-emp-id="${empId}"]`);
+      const zRow   = document.getElementById('zuschlag-row-' + empId);
+      if (empRow) empRow.remove();
+      if (zRow)   zRow.remove();
+      for (let i=0; i<7; i++) delete zuschlagData[empId+'_'+i];
+      calculateGrandTotal();
+      renderMobileFromDesktop();
+      saveDraftSoon();
+    }
+
+    /* ═══ DESKTOP DATA HELPERS ══════════════════════════════════════════ */
+    function getDesktopData(){
+      const rows = [];
+      document.querySelectorAll('#zeitBody .emp-row').forEach(tr=>{
+        const empId    = parseInt(tr.dataset.empId, 10);
+        const name     = tr.querySelector('.emp-name-input')?.value || '';
+        const days     = Array.from(tr.querySelectorAll('.day-input')).map(i=> i.value || '');
+        const total    = tr.querySelector('.total-field')?.value || '0.00';
+        const zuschlag = Array.from({length:7}, (_,i)=> zuschlagData[empId+'_'+i] || '');
+        rows.push({ empId, name, days, total, zuschlag });
+      });
+      return rows;
+    }
+
+    function setDesktopDataRow(idx, {name, days, zuschlag}){
+      const empRows = document.querySelectorAll('#zeitBody .emp-row');
+      if (!empRows[idx]) return;
+      const tr    = empRows[idx];
+      const empId = parseInt(tr.dataset.empId, 10);
+
+      if (name !== undefined){
+        const ni = tr.querySelector('.emp-name-input');
+        if (ni) ni.value = name ?? '';
+      }
+      if (days){
+        const dayInputs = tr.querySelectorAll('.day-input');
+        for (let i=0; i<dayInputs.length; i++){
+          dayInputs[i].value = (days[i] != null) ? days[i] : '';
+        }
+      }
+      if (zuschlag){
+        zuschlag.forEach((z, i)=>{ zuschlagData[empId+'_'+i] = z || ''; });
+        const zRow = document.getElementById('zuschlag-row-'+empId);
+        if (zRow){
+          zRow.querySelectorAll('.zuschlag-sel').forEach(sel=>{
+            sel.value = zuschlagData[empId+'_'+parseInt(sel.dataset.day,10)] || '';
+          });
+          const anySet = zuschlag.some(z=> z && z!=='');
+          if (anySet){
+            zRow.style.display = 'table-row';
+            const zBtn = tr.querySelector('.z-btn');
+            if (zBtn) zBtn.classList.add('active');
+          }
+        }
+      }
+      calculateTotalByRow(tr);
+    }
+
+    /* ── Mobile card total helper (kein Full-Re-render) ─────────────────── */
+    function updateMobileCardTotal(cardEl, empId){
+      if (!cardEl) return;
+      const empRow = document.querySelector(`#zeitBody .emp-row[data-emp-id="${empId}"]`);
+      const total  = empRow?.querySelector('.total-field')?.value ?? '0.00';
+      const el     = cardEl.querySelector('[data-role="cardTotal"]');
+      if (el) el.value = total;
+    }
+
+    /* ═══ MOBILE RENDER ═════════════════════════════════════════════════ */
+    function getDayLabels(){
+      const arr = [];
+      for (let i=0;i<7;i++){
+        const el = document.getElementById('d'+i);
+        arr.push(el ? el.innerText : '-');
+      }
+      return arr;
+    }
+
+    function renderMobileFromDesktop(){
+      const mobileList = document.getElementById('mobileEmpList');
+      if (!mobileList) return;
+
+      const labels   = getDayLabels();
+      const data     = getDesktopData();
+      const dayNames = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+
+      mobileList.innerHTML = '';
+
+      data.forEach((row, idx)=>{
+        const empId = row.empId;
+        const card  = document.createElement('div');
+        card.className     = 'emp-card';
+        card.dataset.empId = empId;
+
+        // Tag-Zeilen HTML
+        const dayRowsHtml = Array.from({length:7}).map((_,i)=>{
+          const zVal      = row.zuschlag[i] || '';
+          const hasZ      = !!zVal;
+          return `
+            <div class="day-row">
+              <div class="day-row-main">
+                <div class="day-left">
+                  <div class="dow">${dayNames[i]}</div>
+                  <div class="date">${labels[i]||'-'}</div>
+                </div>
+                <div class="stepper">
+                  <button type="button" data-role="minus" data-day="${i}">−</button>
+                  <input type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0.00"
+                         value="${escapeHtml(row.days[i]||'')}" data-role="day" data-day="${i}">
+                  <button type="button" data-role="plus" data-day="${i}">+</button>
+                </div>
+                <button type="button" class="z-btn-mobile${hasZ?' active':''}"
+                        data-role="zbtn" data-day="${i}">Z</button>
+              </div>
+              <div class="zuschlag-panel${hasZ?' open':''}" data-role="zpanel" data-day="${i}">
+                <button type="button" class="zs-opt${zVal==='night1'?' selected':''}" data-val="night1" data-day="${i}">17–23</button>
+                <button type="button" class="zs-opt${zVal==='night2'?' selected':''}" data-val="night2" data-day="${i}">23–06</button>
+                <button type="button" class="zs-opt${zVal==='feiertag'?' selected':''}" data-val="feiertag" data-day="${i}">F</button>
+                <button type="button" class="zs-clear" data-val="" data-day="${i}">✕</button>
+              </div>
+            </div>`;
+        }).join('');
+
+        card.innerHTML = `
+          <div class="emp-head">
+            <div class="name">
+              <label>Mitarbeiter/in</label>
+              <input type="text" value="${escapeHtml(row.name)}" placeholder="Name" data-role="name">
+            </div>
+            <div class="total">
+              <label>Total</label>
+              <input type="text" data-role="cardTotal" readonly value="${escapeHtml(row.total||'0.00')}"
+                style="background:#fff3b0;border:2px solid var(--zentex-yellow);border-radius:12px;font-weight:1100;text-align:center;margin-bottom:0;">
+            </div>
+          </div>
+          <div class="emp-days">${dayRowsHtml}</div>
+          <button type="button" class="del-btn-mobile" data-role="delbtn">Mitarbeiter entfernen</button>`;
+
+        /* Name */
+        card.querySelector('[data-role="name"]').addEventListener('input', (e)=>{
+          const d2 = getDesktopData();
+          d2[idx].name = e.target.value;
+          setDesktopDataRow(idx, d2[idx]);
+          calculateGrandTotal();
+          saveDraftSoon();
+        });
+
+        /* Tag-Inputs (Tippen) */
+        card.querySelectorAll('[data-role="day"]').forEach(inp=>{
+          inp.addEventListener('input', (e)=>{
+            const di = parseInt(e.target.dataset.day, 10);
+            const d2 = getDesktopData();
+            d2[idx].days[di] = e.target.value;
+            setDesktopDataRow(idx, d2[idx]);
+            calculateGrandTotal();
+            updateMobileCardTotal(card, empId);
+            saveDraftSoon();
+          });
+          inp.addEventListener('blur', (e)=>{
+            const v = e.target.value.trim();
+            if (v==='') { updateMobileCardTotal(card, empId); return; }
+            e.target.value = format2(parseNum(v));
+            const di = parseInt(e.target.dataset.day, 10);
+            const d2 = getDesktopData();
+            d2[idx].days[di] = e.target.value;
+            setDesktopDataRow(idx, d2[idx]);
+            calculateGrandTotal();
+            updateMobileCardTotal(card, empId);
+            saveDraftSoon();
+          });
+        });
+
+        /* +/- Buttons */
+        card.querySelectorAll('[data-role="plus"],[data-role="minus"]').forEach(btn=>{
+          btn.addEventListener('click', (e)=>{
+            const di     = parseInt(e.target.dataset.day, 10);
+            const isPlus = e.target.dataset.role==='plus';
+            const d2     = getDesktopData();
+            let next = parseNum(d2[idx].days[di]) + (isPlus ? STEP_HOURS : -STEP_HOURS);
+            if (next < 0) next = 0;
+            const nextStr = format2(next);
+            d2[idx].days[di] = nextStr;
+            setDesktopDataRow(idx, d2[idx]);
+            calculateGrandTotal();
+            const field = card.querySelector(`[data-role="day"][data-day="${di}"]`);
+            if (field) field.value = nextStr;
+            updateMobileCardTotal(card, empId);
+            saveDraftSoon();
+          });
+        });
+
+        /* Z-Button pro Tag */
+        card.querySelectorAll('[data-role="zbtn"]').forEach(zBtn=>{
+          zBtn.addEventListener('click', ()=>{
+            const di    = parseInt(zBtn.dataset.day, 10);
+            const panel = card.querySelector(`[data-role="zpanel"][data-day="${di}"]`);
+            if (!panel) return;
+            const isOpen = panel.classList.contains('open');
+            panel.classList.toggle('open', !isOpen);
+            zBtn.classList.toggle('active', !isOpen);
+          });
+        });
+
+        /* Zuschlag-Optionen (Mobile) */
+        card.querySelectorAll('.zs-opt,.zs-clear').forEach(optBtn=>{
+          optBtn.addEventListener('click', ()=>{
+            const di     = parseInt(optBtn.dataset.day, 10);
+            const newVal = optBtn.dataset.val || '';
+            zuschlagData[empId+'_'+di] = newVal;
+
+            // Desktop-Select synchronisieren
+            const dSel = document.querySelector(`#zuschlag-row-${empId} .zuschlag-sel[data-day="${di}"]`);
+            if (dSel) dSel.value = newVal;
+
+            // Neu berechnen
+            const empRow = document.querySelector(`#zeitBody .emp-row[data-emp-id="${empId}"]`);
+            if (empRow) calculateTotalByRow(empRow);
+            calculateGrandTotal();
+            updateMobileCardTotal(card, empId);
+
+            // Panel-UI aktualisieren (kein Re-render → kein Fokus-Verlust)
+            const panel = card.querySelector(`[data-role="zpanel"][data-day="${di}"]`);
+            if (panel){
+              panel.querySelectorAll('.zs-opt').forEach(b=>{
+                b.classList.toggle('selected', b.dataset.val===newVal);
+              });
+              if (!newVal){
+                panel.classList.remove('open');
+                const zBtnEl = card.querySelector(`[data-role="zbtn"][data-day="${di}"]`);
+                if (zBtnEl) zBtnEl.classList.remove('active');
+              }
+            }
+            saveDraftSoon();
+          });
+        });
+
+        /* Mitarbeiter entfernen (Mobile) */
+        card.querySelector('[data-role="delbtn"]').addEventListener('click', ()=> removeRow(empId));
+
+        mobileList.appendChild(card);
+      });
+    }
+
+    function syncMobileFromDesktop(){ renderMobileFromDesktop(); }
+
+    /* ═══ SIGNATUREN ════════════════════════════════════════════════════ */
+    const canvasMeta = {};
+
+    function initCanvas(id){
+      const canvas  = document.getElementById(id);
+      const ctx     = canvas.getContext('2d');
+      let drawing   = false;
+
+      const resize = ()=>{
+        const ratio = Math.max(window.devicePixelRatio||1, 1);
+        const old   = canvasMeta[id]?.imageDataURL || null;
+        canvas.width  = canvas.offsetWidth  * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.scale(ratio,ratio);
+        ctx.lineWidth=2.8; ctx.lineCap="round"; ctx.lineJoin="round";
+        if (old){
+          const img = new Image();
+          img.onload = ()=> ctx.drawImage(img,0,0,canvas.offsetWidth,canvas.offsetHeight);
+          img.src = old;
+        }
+      };
+
+      let resizeTimer = null;
+      window.addEventListener('resize', ()=>{
+        if (isTyping) return;
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(()=>{
+          try { canvasMeta[id].imageDataURL = canvas.toDataURL(); } catch(e){}
+          resize();
+        }, 150);
+      });
+      window.addEventListener('orientationchange', ()=>{
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(()=>{
+          try { canvasMeta[id].imageDataURL = canvas.toDataURL(); } catch(e){}
+          resize();
+        }, 200);
+      });
+
+      resize();
+
+      const getP = (e)=>{
+        const r  = canvas.getBoundingClientRect();
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x:cx-r.left, y:cy-r.top };
+      };
+      const start = (e)=>{
+        drawing=true; ctx.beginPath();
+        const p=getP(e); ctx.moveTo(p.x,p.y);
+        if (e.touches) e.preventDefault();
+      };
+      const move  = (e)=>{
+        if (!drawing) return;
+        const p=getP(e); ctx.lineTo(p.x,p.y); ctx.stroke();
+        if (e.touches) e.preventDefault();
+      };
+      const stop  = ()=>{
+        drawing=false;
+        canvasMeta[id].imageDataURL = canvas.toDataURL();
+        saveDraftSoon();
+      };
+      canvas.addEventListener('mousedown',  start);
+      canvas.addEventListener('mousemove',  move);
+      window.addEventListener('mouseup',    stop);
+      canvas.addEventListener('touchstart', start, {passive:false});
+      canvas.addEventListener('touchmove',  move,  {passive:false});
+      canvas.addEventListener('touchend',   stop);
+      canvasMeta[id] = { ctx, canvas, imageDataURL:null };
+    }
+
+    function clearSignature(id){
+      const meta = canvasMeta[id];
+      if (!meta) return;
+      meta.ctx.clearRect(0,0,meta.canvas.offsetWidth,meta.canvas.offsetHeight);
+      meta.imageDataURL = null;
+      saveDraftSoon();
+    }
+
+    // Vollbild-Unterschrift
+    let modalTarget=null, modalDrawing=false, modalCtx=null, _modalEventsAttached=false;
+
+    function openSigModal(target){
+      modalTarget = target;
+      document.getElementById('sigModalTitle').textContent =
+        (target==="monteur") ? "Unterschrift Unternehmer (ZENTEX)" : "Unterschrift Kunde / Bauherr";
+      const hint = document.getElementById('rotateHint');
+      hint.classList.add('visible');
+      setTimeout(()=> hint.classList.remove('visible'), 2200);
+      document.getElementById('sigModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+      requestAnimationFrame(()=> requestAnimationFrame(()=>{
+        _initModalCanvas();
+        if (!_modalEventsAttached){ _attachModalEvents(); _modalEventsAttached=true; }
+      }));
+    }
+
+    function _initModalCanvas(){
+      const canvas = document.getElementById('sigModalCanvas');
+      const ratio  = Math.max(window.devicePixelRatio||1, 1);
+      const w      = canvas.offsetWidth  || 600;
+      const h      = canvas.offsetHeight || 340;
+      canvas.width  = Math.floor(w*ratio);
+      canvas.height = Math.floor(h*ratio);
+      modalCtx = canvas.getContext('2d');
+      modalCtx.setTransform(1,0,0,1,0,0);
+      modalCtx.scale(ratio,ratio);
+      modalCtx.lineWidth=3.2; modalCtx.lineCap="round";
+      modalCtx.lineJoin="round"; modalCtx.strokeStyle="#111";
+      const srcData = canvasMeta[(modalTarget==="monteur")?"canvasMonteur":"canvasKunde"]?.imageDataURL||null;
+      if (srcData){ const img=new Image(); img.onload=()=> modalCtx.drawImage(img,0,0,w,h); img.src=srcData; }
+    }
+
+    function _attachModalEvents(){
+      const canvas = document.getElementById('sigModalCanvas');
+      const getP = (e)=>{
+        const r=canvas.getBoundingClientRect();
+        return { x:(e.touches?e.touches[0].clientX:e.clientX)-r.left,
+                 y:(e.touches?e.touches[0].clientY:e.clientY)-r.top };
+      };
+      const start = (e)=>{ modalDrawing=true; modalCtx.beginPath(); const p=getP(e); modalCtx.moveTo(p.x,p.y); if(e.touches)e.preventDefault(); };
+      const move  = (e)=>{ if(!modalDrawing)return; const p=getP(e); modalCtx.lineTo(p.x,p.y); modalCtx.stroke(); if(e.touches)e.preventDefault(); };
+      const stop  = ()=>{ modalDrawing=false; };
+      canvas.addEventListener('mousedown',  start);
+      canvas.addEventListener('mousemove',  move);
+      window.addEventListener('mouseup',    stop);
+      canvas.addEventListener('touchstart', start, {passive:false});
+      canvas.addEventListener('touchmove',  move,  {passive:false});
+      canvas.addEventListener('touchend',   stop);
+    }
+
+    function modalClear(){
+      if (!modalCtx) return;
+      const canvas = document.getElementById('sigModalCanvas');
+      modalCtx.clearRect(0,0,canvas.width/(window.devicePixelRatio||1),canvas.height/(window.devicePixelRatio||1));
+    }
+
+    function closeSigModal(save){
+      if (save && modalCtx){
+        const dataURL  = document.getElementById('sigModalCanvas').toDataURL();
+        const targetId = (modalTarget==="monteur") ? "canvasMonteur" : "canvasKunde";
+        drawDataURLToFormCanvas(targetId, dataURL);
+        canvasMeta[targetId].imageDataURL = dataURL;
+        saveDraftSoon();
+      }
+      document.getElementById('sigModal').classList.remove('show');
+      document.body.style.overflow='';
+      modalTarget=null; modalDrawing=false;
+    }
+
+    function drawDataURLToFormCanvas(id, dataURL){
+      const meta = canvasMeta[id];
+      if (!meta) return;
+      meta.ctx.clearRect(0,0,meta.canvas.offsetWidth,meta.canvas.offsetHeight);
+      const img=new Image();
+      img.onload=()=> meta.ctx.drawImage(img,0,0,meta.canvas.offsetWidth,meta.canvas.offsetHeight);
+      img.src=dataURL;
+    }
+
+    /* ═══ AUTOSIZE TEXTAREAS ════════════════════════════════════════════ */
+    function autosizeTextarea(el){
+      el.style.height="auto";
+      el.style.height=(el.scrollHeight+2)+"px";
+    }
+    function hookAutosize(){
+      document.querySelectorAll('textarea').forEach(t=>{
+        autosizeTextarea(t);
+        t.addEventListener('input',()=>{ autosizeTextarea(t); saveDraftSoon(); });
+      });
+    }
+
+    /* ═══ DRAFT SAVE / RESTORE ══════════════════════════════════════════
+       collectZeitTable: speichert name, days, total UND zuschlag (v2)
+       restoreDraft:     baut Zeilen komplett neu auf mit Zuschlag-Restore (v2)
+    ════════════════════════════════════════════════════════════════════ */
+    let saveTimer = null;
+    function saveDraftSoon(){
+      if (saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveDraft, 350);
+    }
+
+    function collectZeitTable(){
+      return getDesktopData().map(row=>({
+        name:     row.name,
+        days:     row.days,
+        total:    row.total,
+        zuschlag: row.zuschlag
+      }));
+    }
+
+    function saveDraft(){
+      const draft = {
+        gebaeude:     val('gebaeude'),
+        kunde:        val('kunde'),
+        strasse:      val('strasse'),
+        ort:          val('ort'),
+        datum:        val('datum'),
+        kw:           val('kw'),
+        artArbeit:    val('artArbeit'),
+        ks:           val('ks'),
+        auftragNr:    val('auftragsNr'),
+        bericht:      val('bericht'),
+        material:     val('material'),
+        lieferschein: val('lieferschein'),
+        wegKM:        val('wegKM'),
+        bemerkungen:  val('bemerkungen'),
+        auftragsleiterMail: val('auftragsleiter'),
+        nameMonteur:  val('nameMonteur'),
+        datumMonteur: val('datumMonteur'),
+        nameKunde:    val('nameKunde'),
+        emailKunde:   val('emailKunde'),
+        datumKunde:   val('datumKunde'),
+        zeit:         collectZeitTable(),
+        sigMonteur:   canvasMeta.canvasMonteur?.imageDataURL || null,
+        sigKunde:     canvasMeta.canvasKunde?.imageDataURL   || null
+      };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    }
+
+    function restoreDraft(){
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      let d;
+      try { d = JSON.parse(raw); } catch(e){ return; }
+
+      setVal('gebaeude',    d.gebaeude);
+      setVal('kunde',       d.kunde);
+      setVal('strasse',     d.strasse);
+      setVal('ort',         d.ort);
+      if (d.datum)     setVal('datum',     d.datum);
+      if (d.artArbeit) setVal('artArbeit', d.artArbeit);
+      handleKS();
+      if (d.ks) setVal('ks', d.ks);
+      setVal('auftragsNr',  d.auftragNr);
+      setVal('bericht',     d.bericht);
+      setVal('material',    d.material);
+      setVal('lieferschein',d.lieferschein);
+      setVal('wegKM',       d.wegKM);
+      setVal('bemerkungen', d.bemerkungen);
+      setVal('nameMonteur', d.nameMonteur);
+      setVal('datumMonteur',d.datumMonteur);
+      setVal('nameKunde',   d.nameKunde);
+      setVal('emailKunde',  d.emailKunde);
+      setVal('datumKunde',  d.datumKunde);
+
+      if (d.auftragsleiterMail){
+        const sel = document.getElementById('auftragsleiter');
+        if (sel){ sel.value = d.auftragsleiterMail; onAuftragsleiterChange(); }
+      }
+
+      // Mitarbeiter-Zeilen restaurieren (inkl. Zuschlag) – Zeilen komplett neu aufbauen
+      if (Array.isArray(d.zeit) && d.zeit.length){
+        const body = document.getElementById('zeitBody');
+        body.innerHTML = '';
+        nextEmpId    = 0;
+        zuschlagData = {};
+
+        d.zeit.forEach(()=>{
+          const eid = nextEmpId++;
+          body.appendChild(createEmpRow(eid));
+          body.appendChild(createZuschlagRow(eid));
+        });
+        d.zeit.forEach((r, idx)=>{
+          setDesktopDataRow(idx, {
+            name:     r.name     || '',
+            days:     r.days     || [],
+            zuschlag: r.zuschlag || []
+          });
+        });
+        calculateGrandTotal();
+        renderMobileFromDesktop();
+      }
+
+      // Signaturen
+      if (d.sigMonteur){
+        canvasMeta.canvasMonteur.imageDataURL = d.sigMonteur;
+        drawDataURLToFormCanvas('canvasMonteur', d.sigMonteur);
+      }
+      if (d.sigKunde){
+        canvasMeta.canvasKunde.imageDataURL = d.sigKunde;
+        drawDataURLToFormCanvas('canvasKunde', d.sigKunde);
+      }
+
+      updateDates(true);
+      setTimeout(()=> document.querySelectorAll('textarea').forEach(autosizeTextarea), 50);
+    }
+
+    /* ═══ FORMULAR-AKTIONEN ═════════════════════════════════════════════ */
+    function clearAll(){
+      if (!confirm("Formular wirklich leeren? Alle eingetragenen Daten gehen verloren.")) return;
+      localStorage.removeItem(DRAFT_KEY);
+      window.location.reload();
+    }
+
+    function goBack(){ window.location.href = "./index.html"; }
+
+    // ✅ ADDED – Hilfsfunktionen für Job-Normalisierung und Queue
+    function safeParse(txt, fb){ try{ return JSON.parse(txt); }catch(e){ return fb; } }
+    function normalizeJob(job){
+      const status = String(job?.status || "draft");
+      return { ...job, status, locked: job?.locked === true || status === "done" || status === "synced" };
+    }
+    function getJobs(){ return safeParse(localStorage.getItem(JOBS_KEY)||"[]",[]).map(normalizeJob); }
+    function saveJobs(all){
+      const copy = Array.isArray(all) ? all.slice() : [];
+      copy.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+      localStorage.setItem(JOBS_KEY, JSON.stringify(copy.slice(0, MAX_JOBS)));
+    }
+
+    // ✅ ADDED – Vereinheitlichte E-Mail-Logik
+    function buildUnifiedEmails(emailKunde, auftragsleiterMail){
+      const ek  = String(emailKunde || "").trim();
+      const alm = String(auftragsleiterMail || "").trim();
+
+      // Regie hat kein ansprechmail – kundeEmail = emailKunde
+      const kundeEmail = ek;
+
+      // externalEmails: nur emailKunde (Regie hat kein separates ansprechmail)
+      const externalEmails = ek ? [ek] : [];
+
+      // internalEmail: Auftragsleiter
+      const internalEmail = alm;
+
+      return { kundeEmail, externalEmails, internalEmail };
+    }
+
+    // 🔧 FIXED – Auto-Sync über ZentexSP (ersetzt alte FLOW_START_URL-Logik)
+    async function trySyncPendingRegie(){
+      if(!navigator.onLine) return;
+      if(typeof ZentexSP === "undefined") return;
+      try{
+        var r = await ZentexSP.syncQueue();
+        if(r.synced > 0){
+          console.log("Auto-Sync Regie: " + r.synced + " Jobs synchronisiert.");
+          // Rückkanal: syncedJobIds lokal auf synced + locked setzen
+          if(r.syncedJobIds && r.syncedJobIds.length > 0){
+            var all = getJobs();
+            var changed = false;
+            r.syncedJobIds.forEach(function(sid){
+              var idx = all.findIndex(function(x){ return x.id === sid; });
+              if(idx >= 0 && all[idx].status !== "synced"){
+                all[idx].status    = "synced";
+                all[idx].locked    = true;
+                all[idx].updatedAt = Date.now();
+                changed = true;
+              }
+            });
+            if(changed) saveJobs(all);
+          }
+        }
+      }catch(e){ console.warn("Auto-Sync Regie:", e?.message||e); }
+    }
+
+    // ✅ ADDED – Online-Event: Auto-Sync starten
+    window.addEventListener("online", ()=>{ updateNetStatus(); trySyncPendingRegie(); });
+
+    function saveAndSend(){
+      const artArbeitEl = document.getElementById('artArbeit');
+      const now = Date.now();
+      const regieId = "R" + now;
+
+      const emailKundeVal         = val('emailKunde');
+      const auftragsleiterMailVal = val('auftragsleiter');
+
+      const data = {
+        id:            regieId,
+        gebaeude:      val('gebaeude'),
+        kunde:         val('kunde'),
+        strasse:       val('strasse'),
+        ort:           val('ort'),
+        datum:         val('datum'),
+        kw:            val('kw'),
+        artArbeit:     val('artArbeit'),
+        artArbeitText: artArbeitEl.options[artArbeitEl.selectedIndex]?.text || "",
+        kostenstelle:  val('ks'),
+        auftragNr:     val('auftragsNr'),
+        totalStunden:  document.getElementById('grandTotalTop').value,
+        bericht:       val('bericht'),
+        material:      val('material'),
+        lieferschein:  val('lieferschein'),
+        wegKM:         val('wegKM'),
+        bemerkungen:   val('bemerkungen'),
+        nameMonteur:   val('nameMonteur'),
+        datumMonteur:  val('datumMonteur'),
+        nameKunde:     val('nameKunde'),
+        emailKunde:    emailKundeVal,
+        datumKunde:    val('datumKunde'),
+        auftragsleiterMail: auftragsleiterMailVal,
+        auftragsleiterName: TEAM[auftragsleiterMailVal] || "",
+        sigMonteur:    document.getElementById('canvasMonteur').toDataURL(),
+        sigKunde:      document.getElementById('canvasKunde').toDataURL(),
+        zeit:          collectZeitTable(),
+        timestamp:     now
+      };
+
+      // ✅ ADDED – Vereinheitlichte E-Mail-Felder
+      const unified = buildUnifiedEmails(emailKundeVal, auftragsleiterMailVal);
+      data.kundeEmail     = unified.kundeEmail;
+      data.externalEmails = unified.externalEmails;
+      data.internalEmail  = unified.internalEmail;
+
+      const datumCH = (function(){
+        try{ return new Date(data.datum+"T00:00:00").toLocaleDateString("de-CH"); }
+        catch(e){ return data.datum||""; }
+      })();
+
+      // 🔧 FIXED – Nur vorbereiten, NICHT final submitten. Das macht regie_rapport.html.
+      const all = getJobs();
+      const job = {
+        ...data,
+        id:              regieId,
+        type:            "regie",
+        objekt:          data.gebaeude || "",
+        kunde:           data.kunde || "",
+        firma:           data.gebaeude || "",
+        saznr:           data.auftragNr || "",
+        servicemonteur:  data.nameMonteur || "",
+        ansprechperson:  data.nameKunde || "",
+        ansprechmail:    "",
+        serviceDatum:    data.datum || "",
+        serviceDatumCH:  datumCH,
+        status:          "prepared_for_submit",
+        locked:          false,
+        createdAt:       now,
+        updatedAt:       now
+      };
+      all.unshift(job);
+      saveJobs(all);
+
+      localStorage.removeItem(DRAFT_KEY);
+
+      // Meta setzen für final.html-Kompatibilität
+      localStorage.setItem("zentex_chk_meta_v4", JSON.stringify({
+        jobId:          data.id,
+        firma:          data.gebaeude||"",
+        objekt:         data.gebaeude||"",
+        kunde:          data.kunde||"",
+        saznr:          data.auftragNr||"",
+        serviceDatumCH: datumCH,
+        datum:          datumCH,
+        serviceDatum:   data.datum||"",
+        emailKunde:     emailKundeVal,
+        auftragsleiterMail: auftragsleiterMailVal,
+        type:           "regie"
+      }));
+
+      alert("Rapport lokal gespeichert. Der Rapport wird nun angezeigt.");
+      window.location.href = "./regie_rapport.html?id=" + encodeURIComponent(data.id);
+    }
+
+    /* ═══ INIT ══════════════════════════════════════════════════════════ */
+
+    // 🔧 ADDED – Restore aus gespeichertem Job (für Back-Flow von regie_rapport.html)
+    function restoreFromJob(jobId){
+      const jobs = getJobs();
+      const job = jobs.find(function(x){ return x && x.id === jobId; });
+      if (!job) return false;
+
+      // Kopfdaten
+      setVal('gebaeude',    job.gebaeude);
+      setVal('kunde',       job.kunde);
+      setVal('strasse',     job.strasse);
+      setVal('ort',         job.ort);
+      if (job.datum)      setVal('datum',     job.datum);
+      if (job.artArbeit)  setVal('artArbeit', job.artArbeit);
+      handleKS();
+      if (job.kostenstelle) setVal('ks', job.kostenstelle);
+      setVal('auftragsNr',  job.auftragNr);
+      setVal('bericht',     job.bericht);
+      setVal('material',    job.material);
+      setVal('lieferschein',job.lieferschein);
+      setVal('wegKM',       job.wegKM);
+      setVal('bemerkungen', job.bemerkungen);
+      setVal('nameMonteur', job.nameMonteur);
+      setVal('datumMonteur',job.datumMonteur);
+      setVal('nameKunde',   job.nameKunde);
+      setVal('emailKunde',  job.emailKunde);
+      setVal('datumKunde',  job.datumKunde);
+
+      if (job.auftragsleiterMail){
+        var sel = document.getElementById('auftragsleiter');
+        if (sel){ sel.value = job.auftragsleiterMail; onAuftragsleiterChange(); }
+      }
+
+      // Mitarbeiter-Zeilen
+      if (Array.isArray(job.zeit) && job.zeit.length){
+        var body = document.getElementById('zeitBody');
+        body.innerHTML = '';
+        nextEmpId    = 0;
+        zuschlagData = {};
+
+        job.zeit.forEach(function(){
+          var eid = nextEmpId++;
+          body.appendChild(createEmpRow(eid));
+          body.appendChild(createZuschlagRow(eid));
+        });
+        job.zeit.forEach(function(r, idx){
+          setDesktopDataRow(idx, {
+            name:     r.name     || '',
+            days:     r.days     || [],
+            zuschlag: r.zuschlag || []
+          });
+        });
+        calculateGrandTotal();
+        renderMobileFromDesktop();
+      }
+
+      // Signaturen
+      if (job.sigMonteur && job.sigMonteur !== "data:,"){
+        canvasMeta.canvasMonteur.imageDataURL = job.sigMonteur;
+        drawDataURLToFormCanvas('canvasMonteur', job.sigMonteur);
+      }
+      if (job.sigKunde && job.sigKunde !== "data:,"){
+        canvasMeta.canvasKunde.imageDataURL = job.sigKunde;
+        drawDataURLToFormCanvas('canvasKunde', job.sigKunde);
+      }
+
+      updateDates(true);
+      setTimeout(function(){ document.querySelectorAll('textarea').forEach(autosizeTextarea); }, 50);
+      return true;
+    }
+
+    (function init(){
+      updateNetStatus();
+      window.addEventListener('online',  updateNetStatus);
+      window.addEventListener('offline', updateNetStatus);
+
+      // Datum vorbelegen
+      const today = new Date();
+      document.getElementById('datum').valueAsDate = today;
+      const iso = today.toISOString().slice(0,10);
+      document.getElementById('datumMonteur').value = iso;
+      document.getElementById('datumKunde').value   = iso;
+
+      // Erste Mitarbeiter-Zeile anlegen
+      const body = document.getElementById('zeitBody');
+      const eid  = nextEmpId++;
+      body.appendChild(createEmpRow(eid));
+      body.appendChild(createZuschlagRow(eid));
+
+      initCanvas('canvasMonteur');
+      initCanvas('canvasKunde');
+
+      hookAutosize();
+      handleKS();
+      updateDates(true);
+
+      // 🔧 FIXED – Restore-Logik: ?id= aus URL hat Vorrang, dann Draft
+      const urlJobId = new URLSearchParams(window.location.search).get("id");
+      if (urlJobId){
+        // 🔧 FIX 7 – Gesperrte/abgeschlossene Jobs können nicht mehr editiert werden
+        const allJobsGuard = getJobs();
+        const guardJob = allJobsGuard.find(function(x){ return x && x.id === urlJobId; });
+        if (guardJob){
+          const guardStatus = guardJob.status || "draft";
+          const guardLocked = guardJob.locked === true
+            || guardStatus === "pending_upload"
+            || guardStatus === "done"
+            || guardStatus === "synced";
+          if (guardLocked){
+            alert(
+              "Dieser Regie-Rapport ist abgeschlossen oder wartet auf Synchronisierung\n" +
+              "und kann nicht mehr bearbeitet werden.\n\n" +
+              "Status: " + guardStatus
+            );
+            window.location.href = "./offline.html";
+            return;
+          }
+        }
+        const restored = restoreFromJob(urlJobId);
+        if (!restored){
+          // Fallback auf Draft falls Job nicht gefunden
+          restoreDraft();
+        }
+      } else {
+        restoreDraft();
+      }
+
+      document.querySelectorAll('input,select').forEach(el=>{
+        el.addEventListener('change', saveDraftSoon);
+        el.addEventListener('input',  saveDraftSoon);
+      });
+    })();
+  </script>
+
+  <script>
+    (function(){
+      if (!("serviceWorker" in navigator)) return;
+      

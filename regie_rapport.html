@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="de"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regie-Rapport – Zentex Brandschutz AG</title>
+<script src="./zentex-sp.js" defer></script>
+<script src="./vendor/html2pdf.bundle.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 9px;
+    background: #999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  .page {
+    background: #fff;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 7mm;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.35);
+  }
+  input[type="text"] { background: transparent; }
+  input[type="checkbox"] { width: 9px; height: 9px; margin: 0; flex-shrink: 0; }
+  @media print {
+    body { background: white; padding: 0; }
+    .page { box-shadow: none; padding: 7mm; }
+    .no-print { display: none !important; }
+  }
+
+  /* ── Toolbar (PDF-Buttons) ── */
+  .toolbar {
+    position: sticky;
+    top: 10px;
+    z-index: 1000;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .toolbar button {
+    border: 1px solid #777;
+    background: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .toolbar button:hover { background: #f2f2f2; }
+  .toolbar .btn-pdf {
+    background: #F5C400;
+    border-color: #c9a000;
+    color: #000;
+  }
+  .toolbar .btn-pdf:hover { background: #e0b200; }
+  .toolbar .btn-back {
+    background: #eee;
+  }
+
+  .section-block {
+    position: relative;
+    transition: box-shadow .15s ease, outline-color .15s ease;
+  }
+  .section-block.drag-over { box-shadow: inset 0 0 0 2px #2f6fed; }
+  .drag-handle {
+    position: absolute;
+    right: -26px;
+    top: 4px;
+    width: 22px;
+    height: 22px;
+    border: 1px solid #666;
+    background: #fff;
+    border-radius: 6px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    cursor: grab;
+    user-select: none;
+  }
+  body.drag-mode .drag-handle { display: flex; }
+  body.drag-mode .section-block { outline: 1px dashed #c3c3c3; }
+  body.drag-mode .section-block[draggable="true"] { cursor: grab; }
+  .editable-text {
+    border-radius: 3px;
+    min-width: 6px;
+  }
+  body.edit-mode .editable-text {
+    outline: 1px dashed #6f6f6f;
+    background: rgba(255,255,120,.25);
+  }
+  .editable-text:focus {
+    outline: 1px solid #2f6fed !important;
+    background: rgba(111,162,255,.12) !important;
+  }
+  @media print {
+    .toolbar, .drag-handle { display: none !important; }
+    body.drag-mode .section-block, body.edit-mode .editable-text { outline: none !important; }
+  }
+
+.floating-text {
+  position: absolute;
+  min-width: 40px;
+  min-height: 16px;
+  padding: 2px 4px;
+  border: 1px dashed transparent;
+  background: transparent;
+  font-size: 9px;
+  line-height: 1.2;
+  cursor: move;
+  z-index: 20;
+}
+
+body.edit-mode .floating-text {
+  border-color: #777;
+  background: rgba(255,255,120,.20);
+}
+
+.floating-vline {
+  position: absolute;
+  width: 2px;
+  min-height: 20px;
+  background: #000;
+  cursor: ew-resize;
+  z-index: 25;
+}
+
+body.edit-mode .floating-vline {
+  box-shadow: 0 0 0 1px rgba(47,111,237,.25);
+}
+
+.overlay-item.selected {
+  outline: 1px solid #2f6fed;
+}
+
+.page {
+  position: relative;
+}
+
+.overlay-delete-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 18px;
+  height: 18px;
+  border: 1px solid #666;
+  border-radius: 50%;
+  background: #fff;
+  color: #000;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  cursor: pointer;
+  display: none;
+  z-index: 50;
+}
+
+body.edit-mode .overlay-item.selected .overlay-delete-btn {
+  display: block;
+}
+
+/* ===== bestehende vertikale Linien bearbeitbar ===== */
+
+.resize-host {
+  position: relative;
+}
+
+.col-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  margin-left: -6px;
+  cursor: col-resize;
+  z-index: 80;
+  display: none;
+}
+
+.col-resizer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: rgba(47,111,237,.45);
+  border-radius: 2px;
+}
+
+body.line-resize-mode .col-resizer {
+  display: block;
+}
+
+body.line-resize-mode .resize-host:hover .col-resizer::before {
+  background: rgba(47,111,237,.8);
+}
+
+.editor-only {
+  user-select: none;
+}
+
+body.resizing-cols,
+body.resizing-cols * {
+  cursor: col-resize !important;
+}
+
+@media print {
+  .col-resizer,
+  .editor-only {
+    display: none !important;
+  }
+}
+
+/* ── Signatur-Bilder im Rapport ── */
+.sig-img {
+  max-width: 100%;
+  height: 12mm;
+  display: block;
+  object-fit: contain;
+}
+
+/* ── Status-Banner ── */
+.status-banner {
+  background: #fff3b0;
+  border: 2px solid #F5C400;
+  border-radius: 10px;
+  padding: 10px 18px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  max-width: 210mm;
+  width: 100%;
+}
+.status-banner.error {
+  background: #ffe0e0;
+  border-color: #c00;
+  color: #900;
+}
+
+body.pdf-mode {
+  display: block !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #ffffff !important;
+}
+
+body.pdf-mode .toolbar,
+body.pdf-mode .no-print {
+  display: none !important;
+}
+
+body.pdf-mode #rapportContent,
+body.pdf-mode #rapportPage {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.pdf-mode .page {
+  box-shadow: none !important;
+  margin: 0 !important;
+}
+</style>
+</head>
+<body>
+
+<!-- ══ TOOLBAR ══ -->
+<div class="toolbar no-print">
+  <button class="btn-back" onclick="goBackToRegie()">← Zurück zur Regie</button>
+  <button class="btn-pdf" onclick="druckenAlsPDF()">PDF speichern / drucken</button>
+  <button id="btnFinalSubmit" style="border:1px solid #15652c;background:#1a7f37;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-weight:bold;color:#fff;" onclick="finalSubmitRegie()">✓ Endgültig abschliessen</button>
+</div>
+
+<!-- ══ STATUS ══ -->
+<div id="statusBanner" class="status-banner no-print" style="display:none;"></div>
+
+<div class="page" id="rapportPage">
+
+<!--
+  SPALTEN-KONZEPT (konsistent durch alle Sektionen):
+    A = 38mm  → Logo
+    B = 42mm  → Adresse
+    C = 1fr   → Regie-Rapport (oben) / Art der Arbeiten + Auftrags-Nr (unten)
+    D = 26mm  → Nr. (oben) / Kostenstelle (unten)
+-->
+
+<!-- ══ HEADER ══ -->
+<div style="border: 1px solid rgb(0, 0, 0); display: grid; grid-template-columns: 166px 237px 237px 99px; height: 17mm;" data-grid-resize-init="1" data-resize-id="grid-1" class="">
+
+  <!-- Logo -->
+  <div style="border-right:1px solid #000; display:flex; align-items:center; justify-content:center; padding:2px 4px; overflow:hidden;">
+    <img src="./assets/logo.jpg" alt="Zentex" style="max-width:100%; max-height:13mm; object-fit:contain;">
+  </div>
+
+  <!-- Adresse -->
+  <div style="border-right:1px solid #000; padding:3px 5px; font-size:8.5px; line-height:1.7; display:flex; align-items:center;">
+    <div>Hofmattstrasse 9, CH-5432 Neuenhof<br>Tel. 056 416 20 30, Fax 056 416 20 31<br><span>info@zentex.ch</span></a></div>
+  </div>
+
+  <!-- Regie-Rapport -->
+  <div style="border-right:1px solid #000; display:flex; align-items:center; justify-content:center;">
+    <span style="font-size:16px; font-weight:700;">Regie-Rapport</span>
+  </div>
+
+  <!-- Nr. -->
+  <div style="padding:3px 5px; display:flex; flex-direction:column; gap:4px; font-size:15px; font-weight:700;">
+    <div>Nr.</div>
+    <input id="rap-nr" type="text"
+           style="width:100%; border:none; background:transparent; font-size:14px; height:18px; outline:none; padding:0; box-sizing:border-box;">
+  </div>
+</div>
+
+<!-- ══ GEBÄUDE/KUNDE + ART DER ARBEITEN ══ -->
+<div style="border-left: 1px solid rgb(0, 0, 0); border-right: 1px solid rgb(0, 0, 0); border-bottom: 1px solid rgb(0, 0, 0); display: grid; grid-template-columns: 403px 237px 98px;" data-grid-resize-init="1" data-resize-id="grid-2" class="">
+
+  <!-- A+B: Gebäude/Kunde -->
+  <div style="border-right:1px solid #000; padding:5px 6px; height:100%; display:grid; grid-template-rows:repeat(4, 1fr); row-gap:0;">
+
+  <div style="display:grid; grid-template-columns:70px 1fr; align-items:center; font-size:11px;">
+    <div>Gebäude</div>
+    <input id="rap-gebaeude" type="text" style="border:none; border-bottom:1px solid #999; height:16px; font-size:11px; outline:none; padding:0 2px; width:100%; box-sizing:border-box;">
+  </div>
+
+  <div style="display:grid; grid-template-columns:70px 1fr; align-items:center; font-size:11px;">
+    <div>Kunde</div>
+    <input id="rap-kunde" type="text" style="border:none; border-bottom:1px solid #999; height:16px; font-size:11px; outline:none; padding:0 2px; width:100%; box-sizing:border-box;">
+  </div>
+
+  <div style="display:grid; grid-template-columns:70px 1fr; align-items:center; font-size:11px;">
+    <div>Strasse</div>
+    <input id="rap-strasse" type="text" style="border:none; border-bottom:1px solid #999; height:16px; font-size:11px; outline:none; padding:0 2px; width:100%; box-sizing:border-box;">
+  </div>
+
+  <div style="display:grid; grid-template-columns:70px 1fr; align-items:center; font-size:11px;">
+    <div>PLZ/Ort</div>
+    <input id="rap-ort" type="text" style="border:none; border-bottom:1px solid #999; height:16px; font-size:11px; outline:none; padding:0 2px; width:100%; box-sizing:border-box;">
+  </div>
+
+</div>
+
+  <!-- C: Art der Arbeiten | Auftrags-Nr. -->
+  <div style="border-right: 1px solid rgb(0, 0, 0); display: grid; grid-template-columns: 145px 192px;" data-grid-resize-init="1" data-resize-id="grid-3" class="">
+    <div style="border-right:1px solid #000; padding:4px 6px;">
+      <div style="font-size:8.5px; font-weight:bold; margin-bottom:4px;">Art der Arbeiten</div>
+      <label style="display:flex;align-items:center;gap:4px;font-size:8.5px;margin-bottom:3px;"><input type="checkbox" id="chk-pauschal"> Auftrag Pauschal</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:8.5px;margin-bottom:3px;"><input type="checkbox" id="chk-regie"> Auftrag Regie</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:8.5px;margin-bottom:3px;"><input type="checkbox" id="chk-pikett"> Pikett-Einsatz</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:8.5px;margin-bottom:3px;"><input type="checkbox" id="chk-service"> Service</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:8.5px;margin-bottom:3px;"><input type="checkbox" id="chk-garantie"> Garantie</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:8.5px;margin-bottom:3px;"><input type="checkbox" id="chk-hauptauftrag"> Hauptauftrag</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:8.5px;"><input type="checkbox" id="chk-generalueberholung"> Generalüberholung</label>
+    </div>
+    <div style="padding:4px 6px;">
+  <div style="font-size:8.5px; margin-bottom:4px;">Auftrags-Nr.:</div>
+  <input id="rap-aufnr-0" type="text" style="display:block; border:none; width:40%; font-size:8.5px; outline:none; height:9px; margin-bottom:3px; padding:0;">
+  <input type="text" style="display:block; border:none; width:40%; font-size:8.5px; outline:none; height:9px; margin-bottom:3px; padding:0;">
+  <input type="text" style="display:block; border:none; width:40%; font-size:8.5px; outline:none; height:9px; margin-bottom:3px; padding:0;">
+  <input type="text" style="display:block; border:none; width:40%; font-size:8.5px; outline:none; height:9px; margin-bottom:3px; padding:0;">
+  <input type="text" style="display:block; border:none; width:40%; font-size:8.5px; outline:none; height:9px; margin-bottom:3px; padding:0;">
+  <input type="text" style="display:block; border:none; width:40%; font-size:8.5px; outline:none; height:9px; margin-bottom:3px; padding:0;">
+  <input type="text" style="display:block; border:none; width:40%; font-size:8.5px; outline:none; height:9px; margin-bottom:0; padding:0;">
+</div>
+  </div>
+
+  <!-- D: Kostenstelle -->
+  <div style="padding:4px 5px;">
+    <div style="font-size:8.5px; margin-bottom:4px;">Kostenstelle:</div>
+    <div id="rap-kostenstellen" style="font-weight:bold; font-size:8.5px; line-height:1.5;">
+      3100<br>3200<br>3200<br>3300<br>3500
+    </div>
+  </div>
+</div>
+
+<!-- ══ KW / DATUM ══ -->
+<div style="border-left:1px solid #000; border-right:1px solid #000; border-bottom:1px solid #000;
+            padding:3px 5px; display:flex; align-items:center; gap:5px; font-size:9px; font-weight:bold;">
+  KW / Datum:
+  <input id="rap-kwdatum" type="text" style="border:none; width:110px; font-size:9px; font-weight:normal; outline:none;">
+</div>
+
+<!-- ══ MITARBEITER-TABELLE ══ -->
+<div style="border-left:1px solid #000; border-right:1px solid #000; border-bottom:1px solid #000;" class="">
+  <table style="width:100%; border-collapse:collapse; font-size:8px; table-layout:fixed;" data-table-resize-init="1" data-resize-id="table-1">
+    <colgroup>
+      <col style="width: 183px;">
+      <col style="width: 74px;"><col style="width: 75px;"><col style="width: 69px;"><col style="width: 69px;"><col style="width: 72px;"><col style="width: 73px;"><col style="width: 68px;">
+      <col style="width: 57px;">
+    </colgroup>
+    <thead>
+      <tr style="height:6mm;">
+        <th style="border-right:1px solid #000; border-bottom:1px solid #000; padding:2px 4px; text-align:left; font-weight:bold;">Mitarbeiter/in</th>
+        <th style="border-right:1px solid #000; border-bottom:1px solid #000; padding:0; width:40px; height:24px; vertical-align:top;">
+      <div style="height:12px; line-height:12px; border-bottom:1px solid #000; font-size:7.5px; font-weight:bold; text-align:center;">
+        Mo
+      </div>
+      <input id="rap-d0" type="text" placeholder="dd.mm" style="height:12px; width:100%; border:none; font-size:7px; text-align:center; outline:none; padding:0; margin:0; box-sizing:border-box;">
+    </th><th style="border-right:1px solid #000; border-bottom:1px solid #000; padding:0; width:40px; height:24px; vertical-align:top;">
+      <div style="height:12px; line-height:12px; border-bottom:1px solid #000; font-size:7.5px; font-weight:bold; text-align:center;">
+        Di
+      </div>
+      <input id="rap-d1" type="text" placeholder="dd.mm" style="height:12px; width:100%; border:none; font-size:7px; text-align:center; outline:none; padding:0; margin:0; box-sizing:border-box;">
+    </th><th style="border-right:1px solid #000; border-bottom:1px solid #000; padding:0; width:40px; height:24px; vertical-align:top;">
+      <div style="height:12px; line-height:12px; border-bottom:1px solid #000; font-size:7.5px; font-weight:bold; text-align:center;">
+        Mi
+      </div>
+      <input id="rap-d2" type="text" placeholder="dd.mm" style="height:12px; width:100%; border:none; font-size:7px; text-align:center; outline:none; padding:0; margin:0; box-sizing:border-box;">
+    </th><th style="border-right:1px solid #000; border-bottom:1px solid #000; padding:0; width:40px; height:24px; vertical-align:top;">
+      <div style="height:12px; line-height:12px; border-bottom:1px solid #000; font-size:7.5px; font-weight:bold; text-align:center;">
+        Do
+      </div>
+      <input id="rap-d3" type="text" placeholder="dd.mm" style="height:12px; width:100%; border:none; font-size:7px; text-align:center; outline:none; padding:0; margin:0; box-sizing:border-box;">
+    </th><th style="border-right:1px solid #000; border-bottom:1px solid #000; padding:0; width:40px; height:24px; vertical-align:top;">
+      <div style="height:12px; line-height:12px; border-bottom:1px solid #000; font-size:7.5px; font-weight:bold; text-align:center;">
+        Fr
+      </div>
+      <input id="rap-d4" type="text" placeholder="dd.mm" style="height:12px; width:100%; border:none; font-size:7px; text-align:center; outline:none; padding:0; margin:0; box-sizing:border-box;">
+    </th><th style="border-right:1px solid #000; border-bottom:1px solid #000; padding:0; width:40px; height:24px; vertical-align:top;">
+      <div style="height:12px; line-height:12px; border-bottom:1px solid #000; font-size:7.5px; font-weight:bold; text-align:center;">
+        Sa
+      </div>
+      <input id="rap-d5" type="text" placeholder="dd.mm" style="height:12px; width:100%; border:none; font-size:7px; text-align:center; outline:none; padding:0; margin:0; box-sizing:border-box;">
+    </th><th style="border-right:1px solid #000; border-bottom:1px solid #000; padding:0; width:40px; height:24px; vertical-align:top;">
+      <div style="height:12px; line-height:12px; border-bottom:1px solid #000; font-size:7.5px; font-weight:bold; text-align:center;">
+        So
+      </div>
+      <input id="rap-d6" type="text" placeholder="dd.mm" style="height:12px; width:100%; border:none; font-size:7px; text-align:center; outline:none; padding:0; margin:0; box-sizing:border-box;">
+    </th>
+        <th style="border-bottom:1px solid #000; text-align:center; font-weight:bold; font-size:7px; padding:1px;">Total</th>
+      </tr>
+    </thead>
+    <tbody id="ma-body">
+      <!-- Wird dynamisch befüllt -->
+    </tbody>
+    <tfoot id="ma-foot">
+      <tr style="height:7mm; background:#fff;">
+        <td style="border-right:1px solid #000; border-top:2px solid #000; padding:1px 4px; font-size:8px; font-weight:bold;">Total</td>
+        <td style="border-right:1px solid #000; border-top:2px solid #000; padding:1px 1px;"><input type="text" id="rap-total-d0" style="width:100%;border:none;font-size:8px;outline:none;text-align:center;font-weight:bold;background:transparent;"></td>
+        <td style="border-right:1px solid #000; border-top:2px solid #000; padding:1px 1px;"><input type="text" id="rap-total-d1" style="width:100%;border:none;font-size:8px;outline:none;text-align:center;font-weight:bold;background:transparent;"></td>
+        <td style="border-right:1px solid #000; border-top:2px solid #000; padding:1px 1px;"><input type="text" id="rap-total-d2" style="width:100%;border:none;font-size:8px;outline:none;text-align:center;font-weight:bold;background:transparent;"></td>
+        <td style="border-right:1px solid #000; border-top:2px solid #000; padding:1px 1px;"><input type="text" id="rap-total-d3" style="width:100%;border:none;font-size:8px;outline:none;text-align:center;font-weight:bold;background:transparent;"></td>
+        <td style="border-right:1px solid #000; border-top:2px solid #000; padding:1px 1px;"><input type="text" id="rap-total-d4" style="width:100%;border:none;font-size:8px;outline:none;text-align:center;font-weight:bold;background:transparent;"></td>
+        <td style="border-right:1px solid #000; border-top:2px solid #000; padding:1px 1px;"><input type="text" id="rap-total-d5" style="width:100%;border:none;font-size:8px;outline:none;text-align:center;font-weight:bold;background:transparent;"></td>
+        <td style="border-right:1px solid #000; border-top:2px solid #000; padding:1px 1px;"><input type="text" id="rap-total-d6" style="width:100%;border:none;font-size:8px;outline:none;text-align:center;font-weight:bold;background:transparent;"></td>
+        <td style="border-right:1px solid #000; border-top:2px solid #000; padding:1px 3px;"><input type="text" id="rap-total-all" style="width:100%;border:none;font-size:8px;outline:none;text-align:center;font-weight:bold;background:transparent;"></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<!-- ══ Zuschlag-Hinweise ══ -->
+<div style="border-left:1px solid #000; border-right:1px solid #000; border-bottom:1px solid #000;
+            padding:2px 5px; font-size:7.5px; display:flex; gap:20px;">
+  <span>1)&nbsp; 17:00 - 23:00 Uhr +25%</span>
+  <span>2)&nbsp; 23:00 - 06:00 / Samstag +50%</span>
+  <span>3)&nbsp; Sonntag / Feiertage +100%</span>
+</div>
+
+<!-- ══ AUSGEFÜHRTE ARBEITEN ══ -->
+<div style="border-left:1px solid #000; border-right:1px solid #000; border-bottom:1px solid #000; padding:4px 5px;">
+  <div style="font-weight:bold; font-size:9px; margin-bottom:3px;">Ausgeführte Arbeiten:</div>
+  <textarea id="rap-bericht" rows="6" style="width:100%; border:none; resize:none; font-size:9px; font-family:Arial,Helvetica,sans-serif; outline:none;"></textarea>
+</div>
+
+<!-- ══ MATERIAL AUS FAHRZEUG ══ -->
+<div style="border-left:1px solid #000; border-right:1px solid #000; border-bottom:1px solid #000; padding:4px 5px;" class="">
+  <div style="font-weight:bold; font-size:9px; margin-bottom:3px;">Material aus Fahrzeug:</div>
+  <table id="rap-material-table" style="width:100%; border-collapse:collapse; font-size:9px;" data-table-resize-init="1" data-resize-id="table-2"><colgroup><col style="width: 64px;"><col style="width: 300px;"><col style="width: 64px;"><col style="width: 300px;"></colgroup>
+    <thead>
+      <tr>
+        <th style="text-align:left; padding:1px 3px; width:17mm; font-weight:bold;">Stk</th>
+        <th style="text-align:left; padding:1px 3px; font-weight:bold;">Artikel</th>
+        <th style="text-align:left; padding:1px 3px; width:17mm; font-weight:bold;">Stk.</th>
+        <th style="text-align:left; padding:1px 3px; font-weight:bold;">Artikel</th>
+      </tr>
+    </thead>
+    <tbody id="rap-material-body">
+      <tr><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td></tr>
+      <tr><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td></tr>
+      <tr><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td></tr>
+      <tr><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td><td style="padding:2px 3px;"><input type="text" style="width:100%;border:none;font-size:9px;outline:none;"></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══ MATERIAL GEMÄSS LIEFERSCHEIN ══ -->
+<div style="border-left:1px solid #000; border-right:1px solid #000; border-bottom:1px solid #000; padding:3px 5px; font-size:9px;">
+  <label style="font-weight:bold;">Material gemäss Lieferschein-Nr:</label>
+  <input id="rap-lieferschein" type="text" style="border:none; font-size:9px; outline:none; width:55%;">
+</div>
+
+<!-- ══ WEGENTSCHÄDIGUNG ══ -->
+<div style="border-left:1px solid #000; border-right:1px solid #000; border-bottom:1px solid #000; padding:3px 5px; font-size:9px;">
+  <label style="font-weight:bold;">Wegentschädigung-KM:</label>
+  <input id="rap-wegkm" type="text" style="border:none; font-size:9px; outline:none; width:55%;">
+</div>
+
+<!-- ══ BEMERKUNGEN ══ -->
+<div style="border-left:1px solid #000; border-right:1px solid #000; border-bottom:1px solid #000; padding:4px 5px;">
+  <div style="font-weight:bold; font-size:9px; margin-bottom:2px;">Bemerkungen:</div>
+  <textarea id="rap-bemerkungen" rows="8" style="width:100%; border:none; resize:none; font-size:9px; font-family:Arial,Helvetica,sans-serif; outline:none;"></textarea>
+</div>
+
+<!-- ══ UNTERSCHRIFTEN ══ -->
+<div style="border-left: 1px solid rgb(0, 0, 0); border-right: 1px solid rgb(0, 0, 0); border-bottom: 1px solid rgb(0, 0, 0); display: grid; grid-template-columns: 369px 369px; font-size: 9px;" data-grid-resize-init="1" data-resize-id="grid-4" class="">
+  <div style="border-right:1px solid #000; padding:5px 6px;">
+    <div style="font-weight:bold; margin-bottom:6px;">Unterschrift &nbsp;&nbsp;&nbsp; Unternehmer</div>
+    <div style="display:flex; align-items:flex-end; margin-bottom:5px; gap:4px; height:16px;">
+      <label style="min-width:20mm;">Ort, Datum</label>
+      <input id="rap-sig-datum-u" type="text" style="border:none; border-bottom:1px solid #888; flex:1; font-size:9px; outline:none;">
+    </div>
+    <div style="display:flex; align-items:flex-end; margin-bottom:5px; gap:4px; height:16px;">
+      <label style="min-width:20mm;">Name</label>
+      <input id="rap-sig-name-u" type="text" style="border:none; border-bottom:1px solid #888; flex:1; font-size:9px; outline:none;">
+    </div>
+    <div style="display:flex; align-items:flex-end; gap:4px; min-height:15mm;">
+  <label style="min-width:20mm; align-self:flex-start; padding-top:2px;">Unterschrift</label>
+  <div id="signature_company" style="flex:1; border-bottom:1px solid #888; min-height:13mm; display:flex; align-items:flex-end;"></div>
+</div>
+  </div>
+  <div style="padding:5px 6px;">
+    <div style="font-weight:bold; margin-bottom:6px;">Unterschrift &nbsp;&nbsp;&nbsp; Kunde, Bauherr, Bauherrenvertreter</div>
+    <div style="display:flex; align-items:flex-end; margin-bottom:5px; gap:4px; height:16px;">
+      <label style="min-width:20mm;">Ort, Datum</label>
+      <input id="rap-sig-datum-k" type="text" style="border:none; border-bottom:1px solid #888; flex:1; font-size:9px; outline:none;">
+    </div>
+    <div style="display:flex; align-items:flex-end; margin-bottom:5px; gap:4px; height:16px;">
+      <label style="min-width:20mm;">Name</label>
+      <input id="rap-sig-name-k" type="text" style="border:none; border-bottom:1px solid #888; flex:1; font-size:9px; outline:none;">
+    </div>
+    <div style="display:flex; align-items:flex-end; gap:4px; min-height:15mm;">
+  <label style="min-width:20mm; align-self:flex-start; padding-top:2px;">Unterschrift</label>
+  <div id="signature_customer" style="flex:1; border-bottom:1px solid #888; min-height:13mm; display:flex; align-items:flex-end;"></div>
+</div>
+  </div>
+</div>
+
+</div><!-- /.page -->
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   DATENÜBERNAHME AUS REGIE.HTML → RAPPORT
+   ═══════════════════════════════════════════════════════════════════ */
+
+const JOBS_KEY  = "zentex_offline_jobs_v1";
+
+/* ── Hilfsfunktionen ── */
+function parseNum(v){
+  const s = (v || "").toString().trim().replace(",", ".");
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+function format2(n){ return (Math.round(n * 100) / 100).toFixed(2); }
+
+function getJobIdFromURL(){
+  const params = new URLSearchParams(window.location.search);
+  return params.get("id") || null;
+}
+
+function loadJob(jobId){
+  const raw = localStorage.getItem(JOBS_KEY);
+  if (!raw) return null;
+  try {
+    const jobs = JSON.parse(raw);
+    if (!Array.isArray(jobs)) return null;
+    return jobs.find(j => j.id === jobId) || null;
+  } catch(e){ return null; }
+}
+
+function showStatus(msg, isError){
+  const el = document.getElementById("statusBanner");
+  el.textContent = msg;
+  el.style.display = "block";
+  if (isError) el.classList.add("error");
+  else el.classList.remove("error");
+}
+
+/* ── Datum → dd.mm.yyyy (Schweizer Format) ── */
+function formatDatumCH(isoStr){
+  if (!isoStr) return "";
+  try {
+    const d = new Date(isoStr + "T00:00:00");
+    return d.toLocaleDateString("de-CH", {day:"2-digit", month:"2-digit", year:"numeric"});
+  } catch(e){ return isoStr; }
+}
+
+/* ── Wochentag-Daten (Mo–So) aus Datum berechnen ── */
+function calcWeekDates(isoStr){
+  const dates = [];
+  if (!isoStr) return dates;
+  const d = new Date(isoStr + "T00:00:00");
+  if (isNaN(d)) return dates;
+  const dayn = (d.getDay() + 6) % 7; // Mo=0 .. So=6
+  const mon = new Date(d);
+  mon.setDate(d.getDate() - dayn);
+  for (let i = 0; i < 7; i++){
+    const curr = new Date(mon);
+    curr.setDate(mon.getDate() + i);
+    dates.push(curr.toLocaleDateString("de-CH", {day:"2-digit", month:"2-digit"}));
+  }
+  return dates;
+}
+
+/* ── KW berechnen (ISO) ── */
+function calcKW(isoStr){
+  if (!isoStr) return "";
+  const d = new Date(isoStr + "T00:00:00");
+  if (isNaN(d)) return "";
+  const tdt = new Date(d.valueOf());
+  const dayn = (d.getDay() + 6) % 7;
+  tdt.setDate(tdt.getDate() - dayn + 3);
+  const firstDay = new Date(tdt.getFullYear(), 0, 4);
+  return 1 + Math.ceil((tdt - firstDay.getTime()) / 604800000);
+}
+
+/* ── Mapping Art der Arbeiten → Checkbox-ID ── */
+const ART_CHECKBOX_MAP = {
+  "Auftrag Pauschal":   "chk-pauschal",
+  "Auftrag Regie":      "chk-regie",
+  "Pikett-Einsatz":     "chk-pikett",
+  "Service":            "chk-service",
+  "Garantie":           "chk-garantie",
+  "Hauptauftrag":       "chk-hauptauftrag",
+  "Generalüberholung":  "chk-generalueberholung"
+};
+
+/* Fallback: Wenn kein artArbeitText vorhanden, Mapping über Kostenstelle + Index */
+const KS_CHECKBOX_FALLBACK = {
+  "3100": "chk-pauschal",
+  "3200": "chk-regie",      // Default: Auftrag Regie (häufigster Fall)
+  "3300": "chk-service",
+  "3500": "chk-garantie"
+};
+
+/* ── Mitarbeiter-Zeile im Rapport erzeugen ── */
+function createMaRow(name, days, total){
+  const tr = document.createElement("tr");
+  tr.style.height = "8mm";
+
+  // Name
+  const td0 = document.createElement("td");
+  td0.style.cssText = "border-right:1px solid #000; border-bottom:1px solid #ccc; padding:1px 4px;";
+  const i0 = document.createElement("input");
+  i0.type = "text";
+  i0.style.cssText = "width:100%;border:none;font-size:8px;outline:none;";
+  i0.value = name || "";
+  td0.appendChild(i0);
+  tr.appendChild(td0);
+
+  // 7 Tage (Mo–So)
+  for (let c = 0; c < 7; c++){
+    const td = document.createElement("td");
+    td.style.cssText = "border-right:1px solid #000; border-bottom:1px solid #ccc; padding:1px 1px;";
+    const inp = document.createElement("input");
+    inp.type = "text";
+    inp.style.cssText = "width:100%;border:none;font-size:8px;outline:none;text-align:center;";
+    const val = (days && days[c]) ? days[c] : "";
+    // Nur anzeigen wenn Wert > 0
+    inp.value = (val && parseNum(val) > 0) ? format2(parseNum(val)) : "";
+    td.appendChild(inp);
+    tr.appendChild(td);
+  }
+
+  // Total
+  const tdT = document.createElement("td");
+  tdT.style.cssText = "border-bottom:1px solid #ccc; padding:1px 3px; background:transparent;";
+  const iT = document.createElement("input");
+  iT.type = "text";
+  iT.style.cssText = "width:100%;border:none;font-size:8px;outline:none;text-align:center;font-weight:bold;background:transparent;";
+  iT.value = total || "";
+  tdT.appendChild(iT);
+  tr.appendChild(tdT);
+
+  return tr;
+}
+
+/* ── Material-Text parsen (Zeilen → Stk/Artikel-Paare) ── */
+function parseMaterial(text){
+  if (!text) return [];
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  const items = [];
+  for (const line of lines){
+    // Versuche "Stk Artikel" oder "Stk. Artikel" oder "Stk x Artikel" zu erkennen
+    const m = line.match(/^(\d+)\s*[.xX×]?\s+(.+)$/);
+    if (m){
+      items.push({ stk: m[1], artikel: m[2].trim() });
+    } else {
+      // Ganze Zeile als Artikel ohne Stk
+      items.push({ stk: "", artikel: line });
+    }
+  }
+  return items;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   HAUPTFUNKTION: Rapport befüllen
+   ══════════════════════════════════════════════════════════════════ */
+function populateRapport(data){
+  if (!data) return;
+
+  // ── Kopfdaten ──
+  document.getElementById("rap-nr").value       = data.auftragNr || "";
+  document.getElementById("rap-gebaeude").value  = data.gebaeude || "";
+  document.getElementById("rap-kunde").value     = data.kunde || "";
+  document.getElementById("rap-strasse").value   = data.strasse || "";
+  document.getElementById("rap-ort").value       = data.ort || "";
+
+  // ── Art der Arbeiten (Checkbox) ──
+  // Zuerst alle unchecken
+  document.querySelectorAll('[id^="chk-"]').forEach(cb => cb.checked = false);
+
+  if (data.artArbeitText && ART_CHECKBOX_MAP[data.artArbeitText]){
+    const cbId = ART_CHECKBOX_MAP[data.artArbeitText];
+    const cb = document.getElementById(cbId);
+    if (cb) cb.checked = true;
+  } else if (data.artArbeit && KS_CHECKBOX_FALLBACK[data.artArbeit]){
+    const cbId = KS_CHECKBOX_FALLBACK[data.artArbeit];
+    const cb = document.getElementById(cbId);
+    if (cb) cb.checked = true;
+  }
+
+  // ── Auftrags-Nr ──
+  document.getElementById("rap-aufnr-0").value = data.auftragNr || "";
+
+  // ── KW / Datum ──
+  const kw = data.kw || calcKW(data.datum);
+  const datumCH = formatDatumCH(data.datum);
+  document.getElementById("rap-kwdatum").value = kw + " / " + datumCH;
+
+  // ── Wochentag-Daten in Tabellenkopf ──
+  const weekDates = calcWeekDates(data.datum);
+  for (let i = 0; i < 7; i++){
+    const el = document.getElementById("rap-d" + i);
+    if (el && weekDates[i]) el.value = weekDates[i];
+  }
+
+  // ── Mitarbeiter-Tabelle ──
+  const tbody = document.getElementById("ma-body");
+  tbody.innerHTML = ""; // Bestehende leere Zeilen entfernen
+
+  const zeitRows = Array.isArray(data.zeit) ? data.zeit : [];
+
+  // Nur Zeilen mit Name oder Stunden anzeigen
+  const filledRows = zeitRows.filter(row => {
+    if ((row.name || "").trim()) return true;
+    if ((row.days || []).some(v => parseNum(v) > 0)) return true;
+    return false;
+  });
+
+  // Mindestens 1 Zeile anzeigen
+  const rowsToShow = filledRows.length > 0 ? filledRows : [{ name: "", days: [], total: "" }];
+
+  // Spaltensummen für Total-Zeile
+  const colSums = [0, 0, 0, 0, 0, 0, 0];
+  let grandTotal = 0;
+
+  rowsToShow.forEach(row => {
+    const rowTotal = row.total || format2(
+      (row.days || []).reduce((s, v) => s + parseNum(v), 0)
+    );
+    tbody.appendChild(createMaRow(row.name, row.days, rowTotal));
+
+    // Spaltensummen
+    (row.days || []).forEach((v, i) => {
+      if (i < 7) colSums[i] += parseNum(v);
+    });
+    grandTotal += parseNum(rowTotal);
+  });
+
+  // Total-Zeile befüllen
+  for (let i = 0; i < 7; i++){
+    const el = document.getElementById("rap-total-d" + i);
+    if (el) el.value = colSums[i] > 0 ? format2(colSums[i]) : "";
+  }
+  const totalEl = document.getElementById("rap-total-all");
+  if (totalEl) totalEl.value = grandTotal > 0 ? format2(grandTotal) : (data.totalStunden || "");
+
+  // ── Bericht ──
+  document.getElementById("rap-bericht").value = data.bericht || "";
+
+  // ── Material ──
+  const materialItems = parseMaterial(data.material);
+  const matBody = document.getElementById("rap-material-body");
+  if (matBody && materialItems.length > 0){
+    const matRows = matBody.querySelectorAll("tr");
+    // Material-Tabelle hat 4 Spalten pro Zeile (2x Stk/Artikel)
+    // → 2 Einträge pro Tabellenzeile (links + rechts)
+    for (let i = 0; i < materialItems.length; i++){
+      const rowIdx = Math.floor(i / 2);
+      const colOffset = (i % 2) * 2; // 0 oder 2
+
+      if (rowIdx < matRows.length){
+        const inputs = matRows[rowIdx].querySelectorAll("input");
+        if (inputs[colOffset])     inputs[colOffset].value     = materialItems[i].stk;
+        if (inputs[colOffset + 1]) inputs[colOffset + 1].value = materialItems[i].artikel;
+      }
+    }
+  }
+
+  // ── Lieferschein ──
+  document.getElementById("rap-lieferschein").value = data.lieferschein || "";
+
+  // ── Wegentschädigung ──
+  document.getElementById("rap-wegkm").value = data.wegKM || "";
+
+  // ── Bemerkungen ──
+  document.getElementById("rap-bemerkungen").value = data.bemerkungen || "";
+
+  // ── Unterschriften ──
+  // Unternehmer
+  const datumMonteurCH = formatDatumCH(data.datumMonteur);
+  document.getElementById("rap-sig-datum-u").value = datumMonteurCH;
+  document.getElementById("rap-sig-name-u").value  = data.nameMonteur || "";
+
+  if (data.sigMonteur && data.sigMonteur !== "data:,"){
+    const sigDiv = document.getElementById("signature_company");
+    const img = document.createElement("img");
+    img.src = data.sigMonteur;
+    img.className = "sig-img";
+    img.alt = "Unterschrift Monteur";
+    sigDiv.innerHTML = "";
+    sigDiv.appendChild(img);
+  }
+
+  // Kunde
+  const datumKundeCH = formatDatumCH(data.datumKunde);
+  document.getElementById("rap-sig-datum-k").value = datumKundeCH;
+  document.getElementById("rap-sig-name-k").value  = data.nameKunde || "";
+
+  if (data.sigKunde && data.sigKunde !== "data:,"){
+    const sigDiv = document.getElementById("signature_customer");
+    const img = document.createElement("img");
+    img.src = data.sigKunde;
+    img.className = "sig-img";
+    img.alt = "Unterschrift Kunde";
+    sigDiv.innerHTML = "";
+    sigDiv.appendChild(img);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PDF / DRUCKEN
+   ══════════════════════════════════════════════════════════════════ */
+function _syncInputsForCapture(container){
+  container.querySelectorAll('input[type="text"], input:not([type])').forEach(function(el){
+    el.setAttribute('value', el.value);
+  });
+  container.querySelectorAll('textarea').forEach(function(el){
+    el.textContent = el.value;
+  });
+  container.querySelectorAll('input[type="checkbox"]').forEach(function(el){
+    if(el.checked) el.setAttribute('checked', '');
+    else el.removeAttribute('checked');
+  });
+}
+
+function _buildRegieFileName(){
+  var job = loadJob(getJobIdFromURL());
+  var jobId = getJobIdFromURL() || "unbekannt";
+  var nr = (job && (job.auftragNr || job.saznr)) || "ohne-nr";
+  var kunde = (job && (job.kunde || job.gebaeude)) || "";
+  nr = nr.replace(/[^a-zA-Z0-9\-_]/g, "_");
+  kunde = kunde.replace(/[^a-zA-Z0-9äöüÄÖÜ\-_ ]/g, "").trim().replace(/\s+/g, "_");
+  // 🔧 FIX 5 – jobId im Dateinamen für globale Eindeutigkeit
+  var safeJobId = jobId.replace(/[^a-zA-Z0-9\-_]/g, "_");
+  var datum = new Date().toISOString().slice(0,10).replace(/-/g,"");
+  var parts = ["Regie-Rapport", nr];
+  if(kunde) parts.push(kunde);
+  parts.push(datum);
+  parts.push(safeJobId);
+  return parts.join("_") + ".pdf";
+}
+
+async function generateRegiePdfBlob(){
+  var element = document.getElementById("rapportPage");
+  if(!element) throw new Error("Element #rapportPage nicht gefunden.");
+  if(typeof html2pdf === "undefined"){
+    throw new Error("html2pdf.js nicht geladen. Bitte Internetverbindung prüfen.");
+  }
+
+  _syncInputsForCapture(element);
+
+  var imgs = element.querySelectorAll("img");
+  var IMG_WARN  = 10;
+  var IMG_LIMIT = 30;
+
+  if(imgs.length > IMG_LIMIT){
+    throw new Error(
+      "Zu viele Bilder im Rapport (" + imgs.length + " Bilder). " +
+      "Bitte auf maximal " + IMG_LIMIT + " Bilder reduzieren."
+    );
+  }
+  if(imgs.length > IMG_WARN){
+    console.warn("generateRegiePdfBlob: Viele Bilder (" + imgs.length + "). PDF-Erzeugung kann länger dauern.");
+  }
+
+  var fileName = _buildRegieFileName();
+
+  document.body.classList.add("pdf-mode");
+
+  var opt = {
+    margin: 0,
+    filename: fileName,
+    image: { type: "jpeg", quality: 0.92 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      imageTimeout: 15000,
+      letterRendering: true,
+      backgroundColor: "#ffffff",
+      scrollX: 0,
+      scrollY: 0
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait"
+    },
+    pagebreak: {
+      mode: ["css", "legacy"]
+    }
+  };
+
+  try{
+    var blob = await html2pdf().set(opt).from(element).outputPdf("blob");
+
+    if(!blob || blob.size === 0){
+      throw new Error("PDF-Erzeugung hat leeres Dokument erzeugt. Bitte Drucken als Alternative verwenden.");
+    }
+
+    return { blob: blob, fileName: fileName };
+  }catch(pdfErr){
+    throw new Error(
+      "PDF-Erzeugung fehlgeschlagen: " + (pdfErr && pdfErr.message || pdfErr) +
+      ". Bitte Drucken als Alternative verwenden."
+    );
+  }finally{
+    document.body.classList.remove("pdf-mode");
+  }
+}
+
+function druckenAlsPDF(){
+  if(typeof html2pdf === "undefined"){
+    window.print();
+    return;
+  }
+
+  showStatus("PDF wird erzeugt…", false);
+
+  generateRegiePdfBlob().then(function(result){
+    var url = URL.createObjectURL(result.blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = result.fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+    showStatus("PDF erzeugt: " + result.fileName, false);
+  }).catch(function(err){
+    console.error("PDF-Erzeugung fehlgeschlagen:", err);
+    showStatus((err && err.message) ? err.message : "PDF-Erzeugung fehlgeschlagen — Fallback: Druckdialog", true);
+    window.print();
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   INITIALISIERUNG
+   ══════════════════════════════════════════════════════════════════ */
+(function init(){
+  const jobId = getJobIdFromURL();
+
+  if (!jobId){
+    showStatus("Kein Rapport-ID in der URL gefunden. Bitte über regie.html einen Rapport abschliessen.", true);
+
+    // 1 leere Zeile erzeugen
+    const tbody = document.getElementById("ma-body");
+    tbody.appendChild(createMaRow("", [], ""));
+    return;
+  }
+
+  const job = loadJob(jobId);
+
+  if (!job){
+    showStatus("Rapport \"" + jobId + "\" nicht im lokalen Speicher gefunden. Möglicherweise wurden die Daten gelöscht.", true);
+
+    const tbody = document.getElementById("ma-body");
+    tbody.appendChild(createMaRow("", [], ""));
+    return;
+  }
+
+  // Rapport mit Job-Daten befüllen
+  populateRapport(job);
+  showStatus("Rapport geladen: " + (job.gebaeude || job.objekt || job.kunde || jobId));
+})();
+
+/* ══════════════════════════════════════════════════════════════════
+   FINALER SUBMIT: Regie-Rapport → SharePoint / Queue
+   ══════════════════════════════════════════════════════════════════ */
+let _submitting = false;
+
+function updateJobStatus(id, patch){
+  try {
+    const raw = localStorage.getItem(JOBS_KEY);
+    const all = raw ? JSON.parse(raw) : [];
+    const idx = all.findIndex(function(x){ return x && x.id === id; });
+    if (idx >= 0){
+      Object.assign(all[idx], patch, { updatedAt: Date.now() });
+      localStorage.setItem(JOBS_KEY, JSON.stringify(all));
+    }
+  } catch(e){ console.error("updateJobStatus:", e); }
+}
+
+function finalSubmitRegie(){
+  if (_submitting) return;
+
+  const urlId = getJobIdFromURL();
+  if (!urlId){ alert("Keine Job-ID vorhanden."); return; }
+
+  const job = loadJob(urlId);
+  if (!job){ alert("Job nicht gefunden."); return; }
+
+  if (job.status === "done" || job.status === "synced"){
+    showStatus("Dieser Rapport wurde bereits abgeschlossen.", false);
+    return;
+  }
+
+  // 🔧 FIX 6 – pending_upload und locked hart blockieren
+  if (job.status === "pending_upload" || job.locked === true){
+    showStatus("Dieser Rapport wartet bereits auf Synchronisierung und kann nicht erneut abgeschlossen werden.", false);
+    var btn2 = document.getElementById("btnFinalSubmit");
+    if (btn2){ btn2.disabled = true; btn2.textContent = "Wartet auf Sync…"; }
+    return;
+  }
+
+  _submitting = true;
+  var btn = document.getElementById("btnFinalSubmit");
+  if (btn) btn.disabled = true;
+
+  if (typeof ZentexSP === "undefined"){
+    alert("Sync-Modul nicht geladen. Abschluss wurde nicht übertragen.\nDaten bleiben lokal erhalten.");
+    updateJobStatus(urlId, { status: "prepared_for_submit", locked: false });
+    showStatus("Sync-Modul fehlt. Bitte Seite neu laden oder Verbindung prüfen.", true);
+    _submitting = false;
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  if (btn) btn.textContent = "PDF wird erzeugt…";
+
+  generateRegiePdfBlob().then(function(pdfResult){
+    // 🔧 FIX – pending_upload wird NICHT mehr hier gesetzt.
+    // Status wird erst nach erfolgreichem submitJob() im nächsten .then() gesetzt.
+
+    var payload = JSON.parse(JSON.stringify(job));
+    payload.jobId = urlId;
+    payload.type = "regie";
+    payload.closedAt = new Date().toISOString();
+    payload.pdfBlob = pdfResult.blob;
+    payload.pdfFileName = pdfResult.fileName;
+
+    if (btn) btn.textContent = "Daten werden übertragen…";
+    return ZentexSP.submitJob(payload, "regie");
+  }).then(function(r){
+    console.log("Regie finalSubmit:", r.mode, r.jobId);
+    if (r.mode === "online"){
+      updateJobStatus(urlId, { status: "synced", locked: true, completedAt: Date.now() });
+      showStatus("Rapport erfolgreich an SharePoint übertragen.", false);
+    } else {
+      updateJobStatus(urlId, { status: "pending_upload", locked: true, completedAt: Date.now() });
+      showStatus("Rapport offline gesichert. Wird bei nächster Verbindung synchronisiert.", false);
+    }
+    setTimeout(function(){
+      window.location.href = "./final.html?id=" + encodeURIComponent(urlId);
+    }, 900);
+  }).catch(function(e){
+    console.warn("Regie finalSubmit Fehler:", e && e.message || e);
+    updateJobStatus(urlId, { status: "prepared_for_submit", locked: false });
+    showStatus("Fehler bei PDF oder Übertragung. Daten bleiben lokal erhalten. Bitte erneut versuchen.", true);
+  }).finally(function(){
+    _submitting = false;
+    if (btn){
+      btn.disabled = false;
+      btn.textContent = "✓ Endgültig abschliessen";
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ZURÜCK ZU REGIE (mit Job-ID in URL)
+   ══════════════════════════════════════════════════════════════════ */
+function goBackToRegie(){
+  var urlId = getJobIdFromURL();
+  if (urlId){
+    window.location.href = "./regie.html?id=" + encodeURIComponent(urlId);
+  } else {
+    window.history.back();
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./icons/icon-192.png" />
+<link rel="apple-touch-icon" href="./icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<title>Instandsetzung – ZENTEX</title>
+
+<style>
+:root{
+  --zentex-yellow:#F5C400;
+  --ink:#111;
+  --muted:#6b7280;
+  --bg:#F6F7F9;
+  --radius:18px;
+  --shadow:0 18px 40px rgba(0,0,0,.10);
+  --line: rgba(17,17,17,.10);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui, Segoe UI, Arial;
+  color:var(--ink);
+  background:
+    radial-gradient(900px 520px at 20% 10%, rgba(245,196,0,.18), transparent 60%),
+    radial-gradient(900px 520px at 90% 20%, rgba(0,0,0,.08), transparent 60%),
+    var(--bg);
+  padding:24px 16px;
+}
+.shell{ max-width:980px; margin:0 auto; }
+.card{
+  background: rgba(255,255,255,.86);
+  backdrop-filter: blur(10px);
+  border:1px solid rgba(17,17,17,.08);
+  border-radius: 26px;
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+.header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  padding-bottom:14px;
+  border-bottom:1px solid rgba(17,17,17,.10);
+}
+.title{ margin:0; font-size:20px; letter-spacing:.2px; }
+.types{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding:10px 12px;
+  border-radius:16px;
+  border:1px solid rgba(17,17,17,.10);
+  background: rgba(255,255,255,.70);
+}
+.types label{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-weight:800;
+  font-size:13px;
+  white-space:nowrap;
+}
+.form{ margin-top:18px; display:grid; gap:14px; }
+
+.row-3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:14px; }
+.row-2{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+.row-1{ display:grid; grid-template-columns: 1fr; gap:14px; }
+
+@media (max-width: 900px){
+  .row-3{grid-template-columns: 1fr 1fr;}
+  .row-3 .field:last-child{grid-column: 1 / -1;}
+}
+@media (max-width: 640px){
+  .row-3, .row-2{grid-template-columns: 1fr;}
+}
+
+.field label{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-weight:900;
+  font-size:13px;
+  margin-bottom:7px;
+}
+.req{ color:#b91c1c; font-weight:900; }
+.field input{
+  width:100%;
+  padding:12px 12px;
+  border-radius: 14px;
+  border:1px solid rgba(17,17,17,.14);
+  background:#fff;
+  font-size:14px;
+  outline:none;
+}
+.field input:focus{
+  border-color: rgba(245,196,0,.9);
+  box-shadow: 0 0 0 4px rgba(245,196,0,.22);
+}
+.actions{ margin-top:8px; display:flex; justify-content:center; }
+button{
+  width: min(520px, 100%);
+  padding:14px 16px;
+  border:none;
+  border-radius: var(--radius);
+  font-weight:900;
+  cursor:pointer;
+  background: linear-gradient(180deg, rgba(245,196,0,1), rgba(245,196,0,.88));
+}
+.meta{
+  margin-top:14px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  color:var(--muted);
+  font-size:12px;
+}
+.pill{
+  padding:7px 10px;
+  border-radius:999px;
+  border:1px solid rgba(17,17,17,.10);
+  background: rgba(255,255,255,.70);
+}
+.back{ margin-top:14px; text-align:center; font-size:13px; }
+a{color:#555;text-decoration:none}
+</style>
+</head>
+
+<body>
+<div class="shell">
+  <div class="card">
+
+    <div class="header">
+      <h1 class="title">CHECKLISTE – Instandhaltung für Sprinkleranlagen</h1>
+
+      <div class="types" role="group" aria-label="Anlagenart">
+        <label><input type="radio" name="anlageart" value="nass"> nass</label>
+        <label><input type="radio" name="anlageart" value="trocken"> trocken</label>
+        <label><input type="radio" name="anlageart" value="spruehflut"> Sprühflut</label>
+      </div>
+    </div>
+
+    <div class="form">
+
+      <!-- ── ZENTEX intern ─────────────────────────────────── -->
+      <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding-bottom:2px;border-bottom:1px solid var(--line);">Zentex</div>
+
+      <div class="row-2">
+        <div class="field">
+          <label>Servicemonteur <span class="req">*</span></label>
+          <input id="servicemonteur" autocomplete="name" />
+        </div>
+        <div class="field">
+          <label>SAZ Nr. <span class="req">*</span></label>
+          <input id="saznr" />
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label>Auftragsleiter <span class="req">*</span></label>
+          <select id="auftragsleiter" onchange="onAuftragsleiterChange()" style="width:100%;padding:12px 12px;border-radius:14px;border:1px solid rgba(17,17,17,.14);background:#fff;font-size:14px;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23555%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22/></svg>');background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;">
+            <option value="">— Auftragsleiter wählen —</option>
+          	<option value="antonio.talerico@zentex.ch">Antonio Talerico</option>
+		<option value="bojan.studen@zentex.ch">Bojan Studen</option>
+		<option value="carmen.trombelli@zentex.ch">Carmen Trombelli</option>
+		<option value="fabian.maissen@zentex.ch">Fabian Maissen</option>
+		<option value="jean-paul.fekete@zentex.ch">Jean-Paul Fekete</option>
+		<option value="jose.rodriguez@zentex.ch">José Eduardo Rodriguez</option>
+		<option value="kaj.furmanski@zentex.ch">Kaj Furmanski</option>
+		<option value="kerstin.schibli@zentex.ch">Kerstin Schibli</option>
+		<option value="marco.seeberger@zentex.ch">Marco Seeberger</option>
+		<option value="michael.weber@zentex.ch">Michael Weber</option>
+		<option value="michal.jancovic@zentex.ch">Michal Jancovic</option>
+		<option value="nenad.vukov@zentex.ch">Nenad Vukov</option>
+		<option value="remo.dellanno@zentex.ch">Remo Dell’Anno</option>
+		<option value="roland.haenni@zentex.ch">Roland Hänni</option>
+          </select>
+          <input type="hidden" id="auftragsleiterMail" />
+          <div id="auftragsleiterMailHint" style="margin-top:5px;font-size:11px;color:#6b7280;min-height:16px;"></div>
+        </div>
+        <div class="field" style="visibility:hidden;"></div>
+      </div>
+
+      <!-- ── Baustelle / Kunde ──────────────────────────────── -->
+      <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding-bottom:2px;border-bottom:1px solid var(--line);margin-top:4px;">Baustelle</div>
+
+      <div class="row-2">
+        <div class="field">
+          <label>Firma <span class="req">*</span></label>
+          <input id="firma" />
+        </div>
+        <div class="field">
+          <label>Datum / Service <span class="req">*</span></label>
+          <input id="serviceDatum" type="date" />
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label>Ansprechperson</label>
+          <input id="ansprechperson" />
+        </div>
+        <div class="field">
+          <label>E-Mail Ansprechperson</label>
+          <input id="ansprechmail" type="email" inputmode="email" autocomplete="email" />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" onclick="saveAndNext()">Speichern &amp; weiter zur Checkliste</button>
+      </div>
+
+      <div class="meta">
+        <span class="pill" id="saveState">Noch nicht gespeichert</span>
+        <span class="pill" id="netState">Netz: prüfen…</span>
+      </div>
+
+      <div class="back">
+        <a href="#" onclick="goBack(); return false;">← Zurück</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Mitarbeitende: Name → E-Mail ──────────────────────────────────────────
+    const TEAM = {
+ 	 "antonio.talerico@zentex.ch": "Antonio Talerico",
+ 	 "bojan.studen@zentex.ch": "Bojan Studen",
+ 	 "carmen.trombelli@zentex.ch": "Carmen Trombelli",
+ 	 "fabian.maissen@zentex.ch": "Fabian Maissen",
+  	"jean-paul.fekete@zentex.ch": "Jean-Paul Fekete",
+ 	 "jose.rodriguez@zentex.ch": "José Eduardo Rodriguez",
+	  "kaj.furmanski@zentex.ch": "Kaj Furmanski",
+	  "kerstin.schibli@zentex.ch": "Kerstin Schibli",
+	  "marco.seeberger@zentex.ch": "Marco Seeberger",
+	  "michael.weber@zentex.ch": "Michael Weber",
+	  "michal.jancovic@zentex.ch": "Michal Jancovic",
+	  "nenad.vukov@zentex.ch": "Nenad Vukov",
+	  "remo.dellanno@zentex.ch": "Remo Dell’Anno",
+ 	 "roland.haenni@zentex.ch": "Roland Hänni"
+	};
+
+	console.log("TEAM loaded", TEAM);
+
+function onAuftragsleiterChange(){
+  const mail = document.getElementById("auftragsleiter").value;
+  document.getElementById("auftragsleiterMail").value = mail;
+  document.getElementById("auftragsleiterMailHint").textContent = mail ? "✉ " + mail : "";
+}
+
+const KEY_HEADER_LOCAL = "currentInstandsetzungHeader";
+const KEY_META = "zentex_chk_meta_v4";
+const JOBS_KEY = "zentex_offline_jobs_v1";
+const MAX_JOBS = 50;
+
+function safeParse(json, fallback){ try { return JSON.parse(json); } catch(e){ return fallback; } }
+
+function todayISO(){
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+function toCHDate(iso){
+  try{ return new Date(iso + "T00:00:00").toLocaleDateString("de-CH"); }catch(e){ return ""; }
+}
+function normalizeJob(job){
+  const status = String(job?.status || "draft");
+  return {
+    ...job,
+    status,
+    locked: job?.locked === true || status === "done" || status === "synced"
+  };
+}
+function getJobs(){
+  return safeParse(localStorage.getItem(JOBS_KEY) || "[]", []).map(normalizeJob);
+}
+function saveJobs(all){
+  const copy = Array.isArray(all) ? all.slice() : [];
+  copy.sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+  localStorage.setItem(JOBS_KEY, JSON.stringify(copy.slice(0, MAX_JOBS)));
+}
+function getCurrentJobId(){
+  const url = new URL(location.href);
+  const meta = safeParse(localStorage.getItem(KEY_META) || "{}", {});
+  return (url.searchParams.get("id") || meta.jobId || "").trim();
+}
+function getCurrentJob(){
+  const id = getCurrentJobId();
+  if (!id) return null;
+  return getJobs().find(x => x.id === id) || null;
+}
+function enforceEditableJob(){
+  const job = getCurrentJob();
+  if(job && job.locked){
+    alert("Dieser Job ist bereits abgeschlossen und kann nicht mehr bearbeitet werden.");
+    window.location.href = "offline.html";
+    throw new Error("LOCKED_JOB");
+  }
+}
+function getAnlageart(){
+  const r = document.querySelector('input[name="anlageart"]:checked');
+  return r ? r.value : "";
+}
+
+function readData(){
+  const alMail = document.getElementById("auftragsleiter").value;
+  return {
+    anlageart:          getAnlageart(),
+    servicemonteur:     document.getElementById("servicemonteur").value.trim(),
+    saznr:              document.getElementById("saznr").value.trim(),
+    firma:              document.getElementById("firma").value.trim(),
+    serviceDatum:       document.getElementById("serviceDatum").value,
+    auftragsleiterMail: alMail,
+    auftragsleiterName: TEAM[alMail] || "",
+    ansprechperson:     document.getElementById("ansprechperson").value.trim(),
+    ansprechmail:       document.getElementById("ansprechmail").value.trim(),
+    savedAt:            new Date().toISOString()
+  };
+}
+
+function validate(d){
+  const missing = [];
+  if(!d.anlageart)          missing.push("Anlagenart (nass/trocken/Sprühflut)");
+  if(!d.servicemonteur)     missing.push("Servicemonteur");
+  if(!d.saznr)              missing.push("SAZ Nr.");
+  if(!d.firma)              missing.push("Firma");
+  if(!d.serviceDatum)       missing.push("Datum / Service");
+  if(!d.auftragsleiterMail) missing.push("Auftragsleiter");
+  return missing;
+}
+
+function saveAndNext(){
+  enforceEditableJob();
+
+  const d = readData();
+  const missing = validate(d);
+
+  if(missing.length){
+    alert("Bitte ausfüllen:\n\n- " + missing.join("\n- "));
+    return;
+  }
+
+  const prevMeta = safeParse(localStorage.getItem(KEY_META) || "{}", {});
+  let jobId = String(getCurrentJobId() || prevMeta.jobId || "").trim();
+  const backUrl = prevMeta.backUrl || "index.html";
+  const chDate  = toCHDate(d.serviceDatum || todayISO());
+  const now = Date.now();
+  const all = getJobs();
+
+  if(!jobId){
+    if (window.crypto && crypto.randomUUID) jobId = crypto.randomUUID();
+    else jobId = "job_" + Date.now() + "_" + Math.random().toString(16).slice(2,8);
+  }
+
+  let job = all.find(x => x.id === jobId);
+  if(!job){
+    job = {
+      id: jobId,
+      createdAt: now
+    };
+    all.unshift(job);
+  } else if (job.locked) {
+    alert("Dieser Job ist bereits abgeschlossen und kann nicht mehr bearbeitet werden.");
+    window.location.href = "offline.html";
+    return;
+  }
+
+  Object.assign(job, {
+    objekt:             d.firma,
+    kunde:              d.firma,
+    firma:              d.firma,
+    saznr:              d.saznr,
+    anlageart:          d.anlageart,
+    servicemonteur:     d.servicemonteur,
+    auftragsleiterMail: d.auftragsleiterMail,
+    auftragsleiterName: d.auftragsleiterName,
+    ansprechperson:     d.ansprechperson,
+    ansprechmail:       d.ansprechmail,
+    serviceDatum:       d.serviceDatum,
+    serviceDatumCH:     chDate,
+    status:             "draft",
+    locked:             false,
+    completedAt:        null,
+    updatedAt:          now
+  });
+  saveJobs(all);
+
+  localStorage.setItem(KEY_HEADER_LOCAL, JSON.stringify({ ...d, jobId }));
+
+  const newMeta = {
+    jobId,
+    objekt:             d.firma,
+    kunde:              d.firma,
+    firma:              d.firma,
+    saznr:              d.saznr,
+    anlageart:          d.anlageart,
+    servicemonteur:     d.servicemonteur,
+    auftragsleiterMail: d.auftragsleiterMail,
+    auftragsleiterName: d.auftragsleiterName,
+    ansprechperson:     d.ansprechperson,
+    ansprechmail:       d.ansprechmail,
+    serviceDatum:       d.serviceDatum,
+    serviceDatumCH:     chDate,
+    serviceDateIso:     d.serviceDatum,
+    datum:              chDate,
+    status:             "draft",
+    locked:             false,
+    completedAt:        null,
+    backUrl:            "instandsetzung.html",
+    hubUrl:             backUrl
+  };
+  localStorage.setItem(KEY_META, JSON.stringify(newMeta));
+
+  document.getElementById("saveState").textContent = "Gespeichert (offline)";
+
+  window.location.href = "checkliste.html?id=" + encodeURIComponent(jobId);
+}
+
+(function preload(){
+  const meta = safeParse(localStorage.getItem(KEY_META) || "{}", {});
+  const raw  = localStorage.getItem(KEY_HEADER_LOCAL);
+  const d    = raw ? safeParse(raw, null) : null;
+  const job  = getCurrentJob();
+
+  if(job && job.locked){
+    alert("Dieser Job ist bereits abgeschlossen und kann nicht mehr bearbeitet werden.");
+    window.location.href = "offline.html";
+    return;
+  }
+  if(meta.locked === true || meta.status === "done" || meta.status === "synced"){
+    alert("Dieser Job ist bereits abgeschlossen und kann nicht mehr bearbeitet werden.");
+    window.location.href = "offline.html";
+    return;
+  }
+
+  document.getElementById("serviceDatum").value =
+    (d && d.serviceDatum) ? d.serviceDatum : (meta.serviceDatum || job?.serviceDatum || todayISO());
+
+  const source = d || meta || job || {};
+
+  if(source.anlageart){
+    const r = document.querySelector(`input[name="anlageart"][value="${source.anlageart}"]`);
+    if(r) r.checked = true;
+  }
+  document.getElementById("servicemonteur").value = source.servicemonteur || "";
+  document.getElementById("saznr").value          = source.saznr || "";
+  document.getElementById("firma").value          = source.firma || source.kunde || "";
+  document.getElementById("ansprechperson").value = source.ansprechperson || "";
+  document.getElementById("ansprechmail").value   = source.ansprechmail || "";
+
+  if(source.auftragsleiterMail){
+    const sel = document.getElementById("auftragsleiter");
+    sel.value = source.auftragsleiterMail;
+    onAuftragsleiterChange();
+  }
+
+  if(d) document.getElementById("saveState").textContent = "Geladen (offline)";
+})();
+
+function goBack(){
+  const meta = safeParse(localStorage.getItem(KEY_META) || "{}", {});
+  const raw  = meta.hubUrl || meta.backUrl || "index.html";
+  const safe = /^javascript:/i.test(raw) ? "index.html" : raw;
+  window.location.href = safe;
+}
+
+const netEl = document.getElementById("netState");
+function updNet(){ netEl.textContent = "Netz: " + (navigator.onLine ? "online" : "offline"); }
+window.addEventListener("online", updNet);
+window.addEventListener("offline", updNet);
+updNet();
+</script>
+<script>
+  (function () {
+    if (!("serviceWorker" in navigator)) return;
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("./service-worker.js").catch(function (err) {
+        console.warn("Service Worker Registrierung fehlgeschlagen:", err);
+      });
+    });
+  })();
+</script>
+</body>
+</html>

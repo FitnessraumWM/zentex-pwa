@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#f5c400" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Checkliste – Instandhaltung</title>
+
+  <style>
+    :root{
+      --bg:#f3f4f6;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --shadow:0 10px 25px rgba(0,0,0,.06);
+      --accent:#f5c400;
+      --ok:#16a34a;
+      --nok:#ef4444;
+      --radius:18px;
+      --radius2:14px;
+      --warn:#f59e0b;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{
+      max-width:980px;
+      margin:18px auto;
+      padding:12px;
+      padding-bottom:110px;
+    }
+
+    .topcard{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+      margin-bottom:12px;
+    }
+
+    .toprow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .title{
+      font-weight:900;
+      font-size:22px;
+      line-height:1.15;
+      margin:2px 0 6px 0;
+    }
+
+    .subtitle{
+      color:var(--muted);
+      font-size:13px;
+      margin:0;
+    }
+
+    .badges{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      margin-left:auto;
+    }
+
+    .badge{
+      font-size:12px;
+      color:#111827;
+      background:#f9fafb;
+      border:1px solid var(--line);
+      padding:8px 10px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+
+    .progressRow{
+      margin-top:12px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      font-size:12px;
+      color:var(--muted);
+      background:#f9fafb;
+      border:1px solid var(--line);
+      padding:8px 10px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+
+    .bar{
+      flex:1;
+      min-width:180px;
+      height:10px;
+      background:#e5e7eb;
+      border-radius:999px;
+      overflow:hidden;
+    }
+
+    .bar > div{
+      height:100%;
+      width:0%;
+      background:var(--accent);
+      border-radius:999px;
+      transition:width .2s ease;
+    }
+
+    .warnBox{
+      margin-top:10px;
+      padding:10px;
+      border-radius:14px;
+      border:1px solid rgba(245,158,11,.35);
+      background:rgba(245,158,11,.10);
+      color:#111827;
+      font-size:12px;
+      font-weight:700;
+      display:none;
+    }
+    .warnBox.show{ display:block; }
+
+    .dateRow{
+      margin-top:12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:#fff;
+    }
+    .dateLeft{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+    }
+    .dateLabel{
+      font-weight:900;
+      font-size:12px;
+      color:#111827;
+    }
+    .dateHint{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+    }
+    .dateInput{
+      border:1px solid var(--line);
+      background:#f9fafb;
+      padding:10px 12px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:13px;
+      outline:none;
+      min-width:180px;
+    }
+    .dateInput:focus{
+      border-color: rgba(245,196,0,.9);
+      box-shadow: 0 0 0 4px rgba(245,196,0,.22);
+      background:#fff;
+    }
+
+    .section{
+      margin-top:12px;
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .sectionHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:14px;
+      cursor:pointer;
+      user-select:none;
+      border-bottom:1px solid var(--line);
+      background:#fff;
+    }
+
+    .sectionTitle{
+      font-weight:900;
+      font-size:16px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .sectionChevron{
+      color:var(--muted);
+      font-weight:900;
+      font-size:14px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#f9fafb;
+      white-space:nowrap;
+    }
+
+    .sectionMeta{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .countBubble{
+      padding:6px 10px;
+      border-radius:999px;
+      background:#f9fafb;
+      border:1px solid var(--line);
+      color:#111827;
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    .items{ padding:12px; display:block; }
+    .items.hidden{ display:none; }
+
+    .item{
+      border:1px solid var(--line);
+      border-radius:var(--radius2);
+      padding:12px;
+      background:#fff;
+      margin-bottom:10px;
+    }
+
+    .itemTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .itemText{
+      font-weight:800;
+      line-height:1.25;
+      font-size:14px;
+    }
+
+    .itemNr{
+      color:var(--muted);
+      font-weight:900;
+      font-size:12px;
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:#f9fafb;
+      white-space:nowrap;
+      height:fit-content;
+    }
+
+    .itemBtns{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .pillBtn{
+      border:1px solid var(--line);
+      background:#fff;
+      color:#111827;
+      padding:10px 14px;
+      border-radius:999px;
+      font-weight:900;
+      cursor:pointer;
+      font-size:13px;
+      transition:transform .05s ease;
+    }
+    .pillBtn:active{ transform:scale(.99); }
+
+    .pillBtn.ok.active{
+      background:rgba(22,163,74,.12);
+      border-color:rgba(22,163,74,.35);
+      color:var(--ok);
+    }
+    .pillBtn.nok.active{
+      background:rgba(239,68,68,.12);
+      border-color:rgba(239,68,68,.35);
+      color:var(--nok);
+    }
+
+    .noteToggleRow{
+      margin-top:12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      user-select:none;
+    }
+    .noteLabel{
+      color:var(--muted);
+      font-size:13px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .noteLabel .req{
+      color:#111827;
+      background:rgba(245,196,0,.25);
+      border:1px solid rgba(245,196,0,.55);
+      padding:3px 8px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .customCb{
+      width:22px;
+      height:22px;
+      cursor:pointer;
+      accent-color:var(--accent);
+      flex:0 0 auto;
+    }
+
+    .noteBox{
+      margin-top:10px;
+      padding:10px;
+      border-radius:var(--radius2);
+      border:1px dashed var(--line);
+      background:#fafafa;
+    }
+    .noteBox.hidden{ display:none; }
+
+    textarea{
+      width:100%;
+      min-height:84px;
+      resize:vertical;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px;
+      font-family:inherit;
+      font-size:13px;
+      outline:none;
+      background:#fff;
+    }
+
+    .hint{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+      font-style:italic;
+    }
+
+    .photoRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:10px;
+      justify-content:space-between;
+    }
+
+    .photoBtns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .photoBtn{
+      border:1px solid var(--line);
+      background:#fff;
+      padding:10px 12px;
+      border-radius:999px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:13px;
+    }
+
+    .photoBtn.danger{
+      border-color:rgba(239,68,68,.35);
+      color:var(--nok);
+      background:rgba(239,68,68,.06);
+    }
+
+    .photoPreview{
+      margin-top:10px;
+      border-radius:14px;
+      max-width:100%;
+      border:1px solid var(--line);
+      display:block;
+    }
+    .photoPreview.hidden{ display:none; }
+
+    .photoGallery{
+      margin-top:10px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .photoGallery.hidden{ display:none; }
+    .galleryItem{
+      flex:0 0 auto;
+      max-width:calc(50% - 5px);
+    }
+    .galleryItem img{
+      width:100%;
+      border-radius:10px;
+      border:1px solid var(--line);
+      display:block;
+    }
+    .galleryLabel{
+      text-align:center;
+      font-size:11px;
+      color:var(--muted);
+      font-weight:700;
+      margin-top:3px;
+    }
+
+    .finalNoteArea{
+      margin-top:18px;
+      background:var(--card);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:var(--shadow);
+      border:2px solid var(--accent);
+    }
+    .finalNoteArea h3{
+      margin:0 0 10px 0;
+      font-size:18px;
+      font-weight:900;
+    }
+
+    .bottomBar{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      background:rgba(243,244,246,.85);
+      backdrop-filter: blur(10px);
+      border-top:1px solid var(--line);
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+    }
+    .bottomInner{
+      max-width:980px;
+      margin:0 auto;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .btn{
+      border:0;
+      cursor:pointer;
+      padding:14px 16px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:14px;
+      box-shadow:0 8px 18px rgba(0,0,0,.06);
+      min-width:160px;
+    }
+
+    .btnBack{
+      background:#fff;
+      border:1px solid var(--line);
+      color:#111827;
+    }
+
+    .btnSave{
+      background:linear-gradient(180deg,#ffd54d,var(--accent));
+      color:#111827;
+    }
+
+    @media (max-width:520px){
+      .btn{ flex:1; min-width:0; }
+      .dateInput{ width:100%; min-width:0; }
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background:rgba(17,17,17,.28);
+      backdrop-filter: blur(6px);
+      z-index:999;
+    }
+    .overlay.on{ display:flex; }
+    .overlayCard{
+      width:min(520px, 100%);
+      background:rgba(255,255,255,.92);
+      border:1px solid var(--line);
+      border-radius:26px;
+      box-shadow: var(--shadow);
+      padding:18px;
+      text-align:center;
+    }
+    .checkAnim{
+      width:86px;height:86px;border-radius:999px;
+      margin:6px auto 12px auto;
+      background:rgba(22,163,74,.10);
+      border:2px solid rgba(22,163,74,.25);
+      display:flex;align-items:center;justify-content:center;
+      font-size:42px;
+      color:var(--ok);
+      animation: pop .38s ease both;
+    }
+    @keyframes pop{
+      0%{ transform:scale(.72); opacity:.2; }
+      100%{ transform:scale(1); opacity:1; }
+    }
+    .overlayTitle{
+      font-weight:950;
+      font-size:18px;
+      margin:0;
+    }
+    .overlayText{
+      margin:6px 0 0 0;
+      color:var(--muted);
+      font-weight:650;
+      font-size:13px;
+      line-height:1.35;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <div class="topcard">
+      <div class="toprow">
+        <div>
+          <div class="title">Checkliste</div>
+          <p class="subtitle" id="headerInfo">Lade Header-Daten...</p>
+        </div>
+
+        <div class="badges">
+          <div class="badge" id="netBadge">Netz: prüfen...</div>
+          <div class="badge" id="offlineBadge">Offline: aktiv</div>
+        </div>
+      </div>
+
+      <div class="dateRow">
+        <div class="dateLeft">
+          <div class="dateLabel">Datum *</div>
+          <div class="dateHint">Heute ist vorausgewählt</div>
+        </div>
+        <input class="dateInput" type="date" id="serviceDate" />
+      </div>
+
+      <div class="progressRow">
+        <div class="pill" id="donePill">0 / 0 erledigt</div>
+        <div class="bar"><div id="barFill"></div></div>
+        <div class="pill" id="nokPill">Nicht OK: 0</div>
+      </div>
+
+      <div class="warnBox" id="missingBox"></div>
+    </div>
+
+    <div id="sections"></div>
+
+    <div class="finalNoteArea">
+      <h3>Bemerkungen</h3>
+      <textarea id="finalNote"
+        placeholder="Hier kann der Monteur ausführliche Informationen eintragen (Materialverbrauch, Besonderheiten, nächste Schritte usw.)..."
+        oninput="saveFinalNote(this.value)"></textarea>
+      <div class="hint">
+        Hinweis: Dieser Schlussbericht ist unabhängig von den Einzel-Bemerkungen.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottomBar">
+    <div class="bottomInner">
+      <button class="btn btnBack" type="button" onclick="goBack()">← Zurück</button>
+      <button class="btn btnBack" type="button" onclick="openRapport()">📄 Rapport</button>
+      <button class="btn btnSave" type="button" onclick="saveOffline()">Speichern</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="saveOverlay" aria-hidden="true">
+    <div class="overlayCard">
+      <div class="checkAnim">✓</div>
+      <p class="overlayTitle">Offline gespeichert</p>
+      <p class="overlayText">Weiterleitung zu „Job erledigt"…</p>
+    </div>
+  </div>
+
+<script>
+  const CHECKLIST = [
+    {"name":"Wasseranschluss","order":1,"items":[
+      {"nr":1,"text":"Schieber auf Gängigkeit und Dichtheit geprüft.","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":2,"text":"Schmutzfänger gereinigt","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":3,"text":"Manometer geprüft","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":4,"text":"Rückschlagklappe gereinigt, Dichtheit kontrolliert","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":5,"text":"Trinkwasserschutzventil gereinigt, Dichtheit und Funktion kontrolliert","bemerkungPflicht":false,"bemerkungHint":""}
+    ]},
+    {"name":"Alarmventile","order":10,"items":[
+      {"nr":10,"text":"Deckeldichtung ersetzt","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":11,"text":"Klappendichtung ersetzt","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":12,"text":"Retard-Chamber kontrolliert","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":13,"text":"Schnellöffner kontrolliert","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":14,"text":"Anlage sauber entleert","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":15,"text":"Dichtheit TAV","bemerkungPflicht":false,"bemerkungHint":""}
+    ]},
+    {"name":"Prüfleitung","order":20,"items":[
+      {"nr":20,"text":"Dichtheit geprüft und Rohrleitung entleert","bemerkungPflicht":false,"bemerkungHint":""}
+    ]},
+    {"name":"Alarmglocke","order":30,"items":[
+      {"nr":30,"text":"Filter und Düse","bemerkungPflicht":false,"bemerkungHint":""}
+    ]},
+    {"name":"Rohrleitungsnetz","order":40,"items":[
+      {"nr":40,"text":"gem. Sichtkontrolle","bemerkungPflicht":false,"bemerkungHint":""}
+    ]},
+    {"name":"Druckluft-Kompressor","order":50,"items":[
+      {"nr":50,"text":"Druckbehälter entleert","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":51,"text":"Ölstand kontrolliert","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":52,"text":"Ein- + Ausschaltdruck","bemerkungPflicht":true,"bemerkungHint":"Ein: ___ bar / Aus: ___ bar"},
+      {"nr":53,"text":"Ein- + Ausschaltdruck (Schwundmelder)","bemerkungPflicht":true,"bemerkungHint":"Ein: ___ bar / Aus: ___ bar"}
+    ]},
+    {"name":"Akku / Prüfbox / Überwachung","order":61,"items":[
+      {"nr":61,"text":"Akku überprüft","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":62,"text":"Sprinklerprüfbox","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":63,"text":"Schieberüberwachung: Öl / Schieberüberwachung","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":64,"text":"Durchflussmelder","bemerkungPflicht":false,"bemerkungHint":""}
+    ]},
+    {"name":"Schaumzumischung","order":70,"items":[
+      {"nr":70,"text":"Füllstand Schaummitteltank i.O.","bemerkungPflicht":true,"bemerkungHint":"Blasentank / Normaltank angeben, ca. ___ Liter"},
+      {"nr":71,"text":"Schaummittelprobe entnommen","bemerkungPflicht":true,"bemerkungHint":"Füllung Rohrleitungsnetz: Wasser oder Premix"}
+    ]},
+    {"name":"Zumischeinrichtung","order":72,"items":[
+      {"nr":72,"text":"Funktionen kontrolliert i.O.","bemerkungPflicht":false,"bemerkungHint":""}
+    ]},
+    {"name":"Frostschutzeinrichtung","order":80,"items":[
+      {"nr":80,"text":"Frostschutz kontrolliert i.O.","bemerkungPflicht":true,"bemerkungHint":"min. Temperatur: ___ °C"},
+      {"nr":81,"text":"Blasenspeicher i.O.","bemerkungPflicht":true,"bemerkungHint":"Fülldruck: ___ bar"},
+      {"nr":82,"text":"Füll + Entleerungseinrichtung i.O.","bemerkungPflicht":true,"bemerkungHint":"Fülldruck: ___ bar"},
+      {"nr":83,"text":"Frostschutztrenner i.O.","bemerkungPflicht":false,"bemerkungHint":""}
+    ]},
+    {"name":"Diesel- und E-Pumpen","order":90,"items":[
+      {"nr":90,"text":"Funktionen und Leistungsdaten i.O. (gem. sep. Wartungsrapport)","bemerkungPflicht":true,"bemerkungHint":"Datum sep. Wartungsrapport: DD.MM.YYYY"}
+    ]},
+    {"name":"Schlusskontrolle","order":100,"items":[
+      {"nr":100,"text":"durchgeführt gem. SP-Kontrollbuch","bemerkungPflicht":false,"bemerkungHint":""}
+    ]},
+    {"name":"Alarmübermittlung ext.","order":101,"items":[
+      {"nr":101,"text":"Feueralarm i.O.","bemerkungPflicht":false,"bemerkungHint":""},
+      {"nr":102,"text":"Störung SPA i.O.","bemerkungPflicht":false,"bemerkungHint":""}
+    ]}
+  ];
+
+  const KEY_PREFIX      = "zentex_chk_v4_item_";
+  const KEY_META        = "zentex_chk_meta_v4";
+  const KEY_FINAL_NOTE  = "zentex_chk_final_note_v4";
+  const KEY_SEC_STATE   = "zentex_chk_sec_state_v4";
+  const QUEUE_KEY       = "zentex_sync_queue_v1";
+  const LAST_SAVE_KEY   = "zentex_last_save_result_v1";
+  const JOBS_KEY        = "zentex_offline_jobs_v1";
+
+  const PHOTO_W       = 1600;
+  const PHOTO_H       = 1200;
+  const PHOTO_QUALITY = 0.82;
+
+  function safeParse(json, fallback){
+    try { return JSON.parse(json); } catch(e){ return fallback; }
+  }
+
+  function todayIso(){
+    const d = new Date();
+    return d.toISOString().split("T")[0];
+  }
+
+  function toCHDate(isoDate){
+    try{
+      const d = new Date(isoDate + "T00:00:00");
+      return d.toLocaleDateString("de-CH");
+    }catch(e){
+      return isoDate || "";
+    }
+  }
+
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+  function escapeAttr(s){ return escapeHtml(s).replaceAll("\n"," "); }
+  function cssEscape(s){ return String(s).replaceAll('"','\\"'); }
+
+  function allItemsFlat(){
+    const arr = [];
+    CHECKLIST
+      .slice()
+      .sort((a,b)=>(a.order||0)-(b.order||0))
+      .forEach(sec => sec.items.forEach(it => arr.push({bereich:sec.name, ...it})));
+    return arr;
+  }
+
+  function lsSet(key, value){
+    try{
+      localStorage.setItem(key, value);
+      return true;
+    }catch(e){
+      console.error("localStorage quota exceeded oder Fehler:", e);
+      alert("Speicher voll! Bitte alte Fotos löschen oder lokalen Speicher freigeben.");
+      return false;
+    }
+  }
+
+  function getJobs(){
+    return safeParse(localStorage.getItem(JOBS_KEY) || "[]", []);
+  }
+  function saveJobs(all){
+    const copy = Array.isArray(all) ? all.slice() : [];
+    copy.sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+    return lsSet(JOBS_KEY, JSON.stringify(copy.slice(0,50)));
+  }
+  function getCurrentJobId(){
+    const url = new URL(location.href);
+    const meta = getMeta();
+    return (url.searchParams.get("id") || meta.jobId || "").trim();
+  }
+  function getCurrentJob(){
+    const id = getCurrentJobId();
+    if (!id) return null;
+    return getJobs().find(x => x && x.id === id) || null;
+  }
+  function isJobLocked(job){
+    return !!(job && (job.locked === true || job.status === "done" || job.status === "synced"));
+  }
+  function ensureEditableJob(){
+    const meta = getMeta();
+    const job = getCurrentJob();
+    if (meta.locked === true || meta.status === "done" || meta.status === "synced" || isJobLocked(job)){
+      alert("Dieser Job ist bereits abgeschlossen und kann nicht mehr bearbeitet werden.");
+      window.location.href = "offline.html";
+      throw new Error("LOCKED_JOB");
+    }
+  }
+  function touchJobDraft(){
+    const job = getCurrentJob();
+    if(!job || isJobLocked(job)) return;
+    job.status = "draft";
+    job.locked = false;
+    job.updatedAt = Date.now();
+    saveJobs(getJobs().map(x => x.id === job.id ? job : x));
+  }
+
+  // 🔧 FIXED – Job-spezifische Item-Keys (verhindert State-Leakage zwischen Jobs)
+  function itemKey(jobId, nr){
+    return jobId ? (KEY_PREFIX + jobId + "_" + nr) : (KEY_PREFIX + nr);
+  }
+
+  function getItemState(nr){
+    const jid = getCurrentJobId();
+    const jKey = itemKey(jid, nr);
+    let raw = localStorage.getItem(jKey);
+
+    // Legacy-Migration: globalen Key lesen und unter job-spezifischem Key speichern
+    if (!raw && jid) {
+      const legacyRaw = localStorage.getItem(KEY_PREFIX + nr);
+      if (legacyRaw) {
+        raw = legacyRaw;
+        // Sofort unter neuem Key speichern (Migration)
+        lsSet(jKey, raw);
+      }
+    }
+
+    const fallback = { status:null, noteEnabled:false, note:"", photos:[], updatedAt:null };
+    if(!raw) return fallback;
+    const parsed = safeParse(raw, fallback);
+    // migrate old single-photo format to photos array
+    if (!Array.isArray(parsed.photos)) {
+      parsed.photos = [];
+    }
+    if (parsed.photo && parsed.photos.length === 0) {
+      parsed.photos.push(parsed.photo);
+    }
+    delete parsed.photo;
+    delete parsed.photoName;
+    return parsed;
+  }
+
+  function setItemState(nr, patch){
+    const jid = getCurrentJobId();
+    const cur  = getItemState(nr);
+    const next = { ...cur, ...patch, updatedAt: Date.now() };
+    lsSet(itemKey(jid, nr), JSON.stringify(next));
+    return next;
+  }
+
+  function setSectionState(secName, isOpen){
+    const raw = localStorage.getItem(KEY_SEC_STATE);
+    const obj = raw ? safeParse(raw, {}) : {};
+    obj[secName] = isOpen ? 1 : 0;
+    lsSet(KEY_SEC_STATE, JSON.stringify(obj));
+  }
+
+  function getSectionState(secName){
+    const raw = localStorage.getItem(KEY_SEC_STATE);
+    const obj = raw ? safeParse(raw, {}) : {};
+    return (obj[secName] === 0) ? 0 : 1;
+  }
+
+  function uiSetStatus(nr, status){
+    ensureEditableJob();
+
+    const cur = getItemState(nr);
+    const nextStatus = (cur.status === status) ? null : status;
+
+    const patch = { status: nextStatus };
+    if(nextStatus === "NOK") patch.noteEnabled = true;
+
+    setItemState(nr, patch);
+
+    const okBtn  = document.querySelector(`[data-ok="${nr}"]`);
+    const nokBtn = document.querySelector(`[data-nok="${nr}"]`);
+    if(okBtn)  okBtn.classList.toggle("active", nextStatus==="OK");
+    if(nokBtn) nokBtn.classList.toggle("active", nextStatus==="NOK");
+
+    const wrap = document.querySelector(`[data-item="${nr}"]`);
+    if(wrap){
+      const box      = wrap.querySelector(`[data-notebox="${nr}"]`);
+      const cb       = wrap.querySelector(`[data-note-toggle="${nr}"]`);
+      const required = wrap.getAttribute("data-note-required") === "1";
+      const st       = getItemState(nr);
+      const enabled  = required ? true : !!st.noteEnabled;
+
+      if(cb){ cb.checked = enabled; }
+      if(box){ box.classList.toggle("hidden", !enabled); }
+    }
+
+    updateAllCounters();
+    validateRequired();
+    touchJobDraft();
+  }
+
+  function uiToggleNote(nr){
+    ensureEditableJob();
+    const wrap = document.querySelector(`[data-item="${nr}"]`);
+    if(!wrap) return;
+
+    const required    = wrap.getAttribute("data-note-required") === "1";
+    const cur         = getItemState(nr);
+    const nextEnabled = required ? true : !cur.noteEnabled;
+    setItemState(nr, { noteEnabled: nextEnabled });
+
+    const box = wrap.querySelector(`[data-notebox="${nr}"]`);
+    const cb  = wrap.querySelector(`[data-note-toggle="${nr}"]`);
+    if(cb)  cb.checked = nextEnabled;
+    if(box) box.classList.toggle("hidden", !nextEnabled);
+
+    validateRequired();
+    touchJobDraft();
+  }
+
+  function uiNoteInput(nr, value){
+    ensureEditableJob();
+    setItemState(nr, { note: value });
+    validateRequired();
+    touchJobDraft();
+  }
+
+  function saveFinalNote(val){
+    ensureEditableJob();
+    lsSet(KEY_FINAL_NOTE, val);
+    touchJobDraft();
+  }
+
+  function ensureHiddenFileInput(nr){
+    let inp = document.getElementById(`file_${nr}`);
+    if(inp) return inp;
+
+    inp = document.createElement("input");
+    inp.type    = "file";
+    inp.accept  = "image/*";
+    inp.setAttribute("capture","environment");
+    inp.id      = `file_${nr}`;
+    inp.style.display = "none";
+
+    inp.addEventListener("change", async (e)=>{
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+
+      try{
+        ensureEditableJob();
+        const dataUrl = await resizeTo1600x1200(file);
+        const st = getItemState(nr);
+        const photos = Array.isArray(st.photos) ? st.photos.slice() : [];
+        photos.push(dataUrl);
+        setItemState(nr, { photos, noteEnabled: true });
+
+        renderPhotoGallery(nr);
+
+        const wrap = document.querySelector(`[data-item="${nr}"]`);
+        if(wrap){
+          const box      = wrap.querySelector(`[data-notebox="${nr}"]`);
+          const cb       = wrap.querySelector(`[data-note-toggle="${nr}"]`);
+          const required = wrap.getAttribute("data-note-required") === "1";
+          if(cb)  cb.checked = true;
+          if(box) box.classList.remove("hidden");
+          if(!required) setItemState(nr, { noteEnabled:true });
+        }
+
+        validateRequired();
+        touchJobDraft();
+      }catch(err){
+        if (String(err && err.message || err).includes("LOCKED_JOB")) return;
+        alert("Foto konnte nicht verarbeitet werden: " + (err && err.message ? err.message : err));
+      }finally{
+        inp.value = "";
+      }
+    });
+
+    document.body.appendChild(inp);
+    return inp;
+  }
+
+  async function resizeTo1600x1200(file){
+    const img    = await fileToImage(file);
+    const canvas = document.createElement("canvas");
+    canvas.width  = PHOTO_W;
+    canvas.height = PHOTO_H;
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0,0,PHOTO_W,PHOTO_H);
+
+    const iw    = img.naturalWidth  || img.width;
+    const ih    = img.naturalHeight || img.height;
+    const scale = Math.min(PHOTO_W / iw, PHOTO_H / ih);
+    const w     = Math.round(iw * scale);
+    const h     = Math.round(ih * scale);
+    const x     = Math.round((PHOTO_W - w) / 2);
+    const y     = Math.round((PHOTO_H - h) / 2);
+
+    ctx.drawImage(img, 0, 0, iw, ih, x, y, w, h);
+    return canvas.toDataURL("image/jpeg", PHOTO_QUALITY);
+  }
+
+  function fileToImage(file){
+    return new Promise((resolve, reject)=>{
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload  = ()=>{ URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error("Bild konnte nicht geladen werden")); };
+      img.src = url;
+    });
+  }
+
+  function uiAddPhoto(nr){
+    ensureEditableJob();
+    const inp = ensureHiddenFileInput(nr);
+    inp.click();
+  }
+
+  function uiRemovePhoto(nr){
+    ensureEditableJob();
+    const st = getItemState(nr);
+    const photos = Array.isArray(st.photos) ? st.photos.slice() : [];
+    if(photos.length > 0) photos.pop();
+    setItemState(nr, { photos });
+    renderPhotoGallery(nr);
+    touchJobDraft();
+  }
+
+  function renderPhotoGallery(nr){
+    const wrap = document.querySelector(`[data-item="${nr}"]`);
+    if(!wrap) return;
+    const gallery = wrap.querySelector(`[data-photo-gallery="${nr}"]`);
+    if(!gallery) return;
+    const st = getItemState(nr);
+    const photos = Array.isArray(st.photos) ? st.photos : [];
+    if(photos.length === 0){
+      gallery.innerHTML = "";
+      gallery.classList.add("hidden");
+      return;
+    }
+    gallery.classList.remove("hidden");
+    gallery.innerHTML = photos.map((src, i) =>
+      `<div class="galleryItem">
+        <img class="photoPreview" src="${src}" alt="Foto ${i+1}" />
+        <div class="galleryLabel">Foto ${i+1}</div>
+      </div>`
+    ).join("");
+  }
+
+  function getMeta(){
+    return safeParse(localStorage.getItem(KEY_META) || "{}", {});
+  }
+
+  function setMeta(m){
+    lsSet(KEY_META, JSON.stringify(m));
+  }
+
+  function initDate(){
+    const m  = getMeta();
+    const el = document.getElementById("serviceDate");
+    const stored = m.serviceDatum || m.serviceDateIso || "";
+    const initial = (stored && /^\d{4}-\d{2}-\d{2}$/.test(stored)) ? stored : todayIso();
+    el.value = initial;
+
+    applyDateToMeta(initial);
+
+    el.addEventListener("change", ()=>{
+      ensureEditableJob();
+      const v = el.value;
+      if(!v){ el.value = todayIso(); }
+      applyDateToMeta(el.value);
+      loadHeader();
+      touchJobDraft();
+    });
+  }
+
+  function applyDateToMeta(iso){
+    const m = getMeta();
+    m.serviceDatum    = iso;
+    m.serviceDateIso  = iso;
+    m.serviceDatumCH  = toCHDate(iso);
+    m.datum           = toCHDate(iso);
+    setMeta(m);
+  }
+
+  function validateDateRequired(){
+    const v = document.getElementById("serviceDate").value;
+    if(!v) return ["Datum fehlt"];
+    return [];
+  }
+
+  function render(){
+    const root   = document.getElementById("sections");
+    root.innerHTML = "";
+
+    const sorted = CHECKLIST.slice().sort((a,b)=>(a.order||0)-(b.order||0));
+
+    sorted.forEach(sec => {
+      const secEl  = document.createElement("div");
+      secEl.className = "section";
+
+      const isOpen = getSectionState(sec.name) === 1;
+
+      const head = document.createElement("div");
+      head.className = "sectionHead";
+      head.innerHTML = `
+        <div class="sectionTitle">
+          ${escapeHtml(sec.name)}
+          <span class="sectionChevron">${isOpen ? "−" : "+"}</span>
+        </div>
+        <div class="sectionMeta">
+          <div class="countBubble" data-sec-count="${escapeAttr(sec.name)}">0 / 0</div>
+        </div>
+      `;
+
+      const itemsWrap = document.createElement("div");
+      itemsWrap.className = "items" + (isOpen ? "" : " hidden");
+
+      head.onclick = () => {
+        const openNow = itemsWrap.classList.contains("hidden");
+        itemsWrap.classList.toggle("hidden", !openNow);
+        setSectionState(sec.name, openNow);
+        const ch = head.querySelector(".sectionChevron");
+        if(ch) ch.textContent = openNow ? "−" : "+";
+      };
+
+      sec.items.forEach(it => {
+        const required = !!it.bemerkungPflicht;
+
+        if(required){
+          const st0  = getItemState(it.nr);
+          const hint = (it.bemerkungHint || "").trim();
+          const note = (st0.note || "").trim();
+          if(!note && hint){
+            setItemState(it.nr, { note: hint, noteEnabled:true });
+          }else{
+            setItemState(it.nr, { noteEnabled:true });
+          }
+        }
+
+        const st          = getItemState(it.nr);
+        const noteEnabled = required ? true : !!st.noteEnabled;
+        const hintText    = (it.bemerkungHint || "").trim();
+
+        const labelHtml = required
+          ? `Werte / Bemerkung <span class="req">erforderlich</span>`
+          : `Bemerkung / Foto`;
+
+        const itemEl = document.createElement("div");
+        itemEl.className = "item";
+        itemEl.setAttribute("data-item", it.nr);
+        itemEl.setAttribute("data-note-required", required ? "1" : "0");
+
+        itemEl.innerHTML = `
+          <div class="itemTop">
+            <div class="itemText">${escapeHtml(it.text || "")}</div>
+            <div class="itemNr">${escapeHtml(String(it.nr))}</div>
+          </div>
+
+          <div class="itemBtns">
+            <button type="button" class="pillBtn ok ${st.status==='OK'?'active':''}"
+              onclick="uiSetStatus(${it.nr}, 'OK')" data-ok="${it.nr}">OK</button>
+            <button type="button" class="pillBtn nok ${st.status==='NOK'?'active':''}"
+              onclick="uiSetStatus(${it.nr}, 'NOK')" data-nok="${it.nr}">Nicht OK</button>
+          </div>
+
+          <div class="noteToggleRow">
+            <div class="noteLabel">${labelHtml}</div>
+            <input type="checkbox" class="customCb"
+              data-note-toggle="${it.nr}"
+              ${noteEnabled ? "checked" : ""}
+              ${required ? "disabled" : ""}
+              onclick="event.stopPropagation(); uiToggleNote(${it.nr});">
+          </div>
+
+          <div class="noteBox ${noteEnabled ? "" : "hidden"}" data-notebox="${it.nr}">
+            <textarea
+              data-note="${it.nr}"
+              placeholder="${escapeAttr(hintText ? hintText : "Bemerkung...")}"
+              oninput="uiNoteInput(${it.nr}, this.value)">${escapeHtml(st.note || "")}</textarea>
+
+            ${hintText ? `<div class="hint">Vorgabe: ${escapeHtml(hintText)}</div>` : ""}
+
+            <div class="photoRow">
+              <div class="photoBtns">
+                <button type="button" class="photoBtn" onclick="uiAddPhoto(${it.nr})">📷 Foto aufnehmen</button>
+                <button type="button" class="photoBtn danger" onclick="uiRemovePhoto(${it.nr})">Letztes Foto löschen</button>
+              </div>
+              <div class="hint">Auto-Resize: ${PHOTO_W}×${PHOTO_H} (JPG) – Mehrere Fotos möglich</div>
+            </div>
+
+            <div class="photoGallery ${st.photos && st.photos.length ? "" : "hidden"}" data-photo-gallery="${it.nr}">
+              ${(st.photos||[]).map((src,i) =>
+                '<div class="galleryItem"><img class="photoPreview" src="'+src+'" alt="Foto '+(i+1)+'" /><div class="galleryLabel">Foto '+(i+1)+'</div></div>'
+              ).join("")}
+            </div>
+          </div>
+        `;
+
+        itemsWrap.appendChild(itemEl);
+      });
+
+      secEl.appendChild(head);
+      secEl.appendChild(itemsWrap);
+      root.appendChild(secEl);
+    });
+
+    document.getElementById("finalNote").value = localStorage.getItem(KEY_FINAL_NOTE) || "";
+
+    updateAllCounters();
+    validateRequired();
+  }
+
+  function updateAllCounters(){
+    let total = 0, done = 0, nok = 0;
+
+    CHECKLIST.forEach(sec => {
+      let sDone = 0;
+      sec.items.forEach(it => {
+        total++;
+        const s = getItemState(it.nr);
+        if(s.status){ done++; sDone++; }
+        if(s.status === "NOK") nok++;
+      });
+      const b = document.querySelector(`[data-sec-count="${cssEscape(sec.name)}"]`);
+      if(b) b.textContent = `${sDone} / ${sec.items.length}`;
+    });
+
+    document.getElementById("donePill").textContent = `${done} / ${total} erledigt`;
+    document.getElementById("nokPill").textContent  = `Nicht OK: ${nok}`;
+    document.getElementById("barFill").style.width  = total ? ((done/total*100).toFixed(1) + "%") : "0%";
+  }
+
+  function validateRequired(){
+    const missing = [];
+
+    validateDateRequired().forEach(x=>missing.push(x));
+
+    allItemsFlat().forEach(it=>{
+      const st   = getItemState(it.nr);
+      const note = (st.note || "").trim();
+
+      if(it.bemerkungPflicht && !note){
+        missing.push(`Nr. ${it.nr}: Pflicht-Bemerkung fehlt`);
+      }
+      if(st.status === "NOK" && !note){
+        missing.push(`Nr. ${it.nr}: Nicht OK ohne Bemerkung`);
+      }
+    });
+
+    const box = document.getElementById("missingBox");
+    if(missing.length){
+      box.classList.add("show");
+      box.innerHTML = `
+        <div style="font-weight:900; margin-bottom:6px;">Achtung: fehlende Pflichtangaben</div>
+        <div style="color:var(--muted); font-weight:700; line-height:1.35;">
+          ${missing.slice(0,6).map(x=>escapeHtml("• " + x)).join("<br>")}
+          ${missing.length>6 ? `<br>${escapeHtml("• ... ("+missing.length+" Punkte)")}` : ""}
+        </div>
+      `;
+    }else{
+      box.classList.remove("show");
+      box.innerHTML = "";
+    }
+
+    return missing;
+  }
+
+  function loadHeader(){
+    const raw = localStorage.getItem(KEY_META);
+    if(raw){
+      const m   = safeParse(raw, {});
+      const dat = m.serviceDatumCH || m.datum || m.serviceDatum || "";
+      const txt = `${m.objekt || m.firma || ""} | ${m.kunde || ""} | ${dat}`.trim();
+      document.getElementById("headerInfo").textContent = txt || "Header-Daten vorhanden";
+    }else{
+      document.getElementById("headerInfo").textContent = "Keine Header-Daten gefunden.";
+    }
+  }
+
+  function updateNetBadge(){
+    const b      = document.getElementById("netBadge");
+    b.textContent = navigator.onLine ? "Netz: online" : "Netz: offline";
+  }
+
+  function goBack(){
+    const meta    = getMeta();
+    const backUrl = (meta && meta.backUrl) ? meta.backUrl : "instandsetzung.html";
+    window.location.href = backUrl;
+  }
+
+  function openRapport(){
+    const jobId = getCurrentJobId();
+    const url = "Checkliste_rapport.html" + (jobId ? ("?id=" + encodeURIComponent(jobId)) : "");
+    window.open(url, "_blank");
+  }
+
+  function showSavedOverlay(){
+    const o = document.getElementById("saveOverlay");
+    o.classList.add("on");
+  }
+
+  function upsertChecklistQueue(payload, missing){
+    const q = safeParse(localStorage.getItem(QUEUE_KEY) || "[]", []);
+    const jobId = String(payload?.meta?.jobId || payload?.jobId || "").trim();
+    const idx = q.findIndex(entry =>
+      entry?.type === "checkliste" &&
+      String(entry?.payload?.meta?.jobId || entry?.payload?.jobId || "").trim() === jobId
+    );
+    const nextEntry = {
+      type:      "checkliste",
+      payload,
+      missing,
+      queuedAt:  Date.now(),
+      status:    "queued"
+    };
+    if (idx >= 0) q[idx] = nextEntry;
+    else q.push(nextEntry);
+    lsSet(QUEUE_KEY, JSON.stringify(q));
+  }
+
+  function saveOffline(){
+    ensureEditableJob();
+
+    const d = document.getElementById("serviceDate").value;
+    if(d) applyDateToMeta(d);
+
+    const missing = validateRequired();
+    if (missing.length > 0){
+      alert("Pflichtangaben fehlen.\n\nBitte korrigieren Sie die markierten Punkte, bevor gespeichert wird.");
+      return;
+    }
+
+    const payload = {
+      jobId:     getCurrentJobId(),
+      meta:      getMeta(),
+      savedAt:   new Date().toISOString(),
+      finalNote: localStorage.getItem(KEY_FINAL_NOTE) || "",
+      items:     {}
+    };
+
+    allItemsFlat().forEach(it=>{
+      const st = getItemState(it.nr);
+      payload.items[it.nr]                    = {
+        status:           st.status,
+        note:             st.note || "",
+        noteEnabled:      !!st.noteEnabled,
+        photos:           Array.isArray(st.photos) ? st.photos : [],
+        updatedAt:        st.updatedAt
+      };
+      payload.items[it.nr].text               = it.text || "";
+      payload.items[it.nr].bemerkungPflicht   = !!it.bemerkungPflicht;
+      payload.items[it.nr].bereich            = it.bereich;
+    });
+
+    upsertChecklistQueue(payload, missing);
+
+    lsSet(LAST_SAVE_KEY, JSON.stringify({
+      ok:           true,
+      missingCount: 0,
+      savedAt:      payload.savedAt
+    }));
+
+    const current = getCurrentJob();
+    if(current){
+      current.objekt = payload.meta.firma || payload.meta.objekt || current.objekt || "";
+      current.kunde = payload.meta.kunde || payload.meta.firma || current.kunde || "";
+      current.firma = payload.meta.firma || current.firma || "";
+      current.saznr = payload.meta.saznr || current.saznr || "";
+      current.anlageart = payload.meta.anlageart || current.anlageart || "";
+      current.servicemonteur = payload.meta.servicemonteur || current.servicemonteur || "";
+      current.ansprechperson = payload.meta.ansprechperson || current.ansprechperson || "";
+      current.ansprechmail = payload.meta.ansprechmail || current.ansprechmail || "";
+      current.serviceDatum = payload.meta.serviceDatum || current.serviceDatum || todayIso();
+      current.serviceDatumCH = payload.meta.serviceDatumCH || current.serviceDatumCH || toCHDate(current.serviceDatum || todayIso());
+      current.status = "draft";
+      current.locked = false;
+      current.completedAt = null;
+      current.updatedAt = Date.now();
+      saveJobs(getJobs().map(x => x.id === current.id ? current : x));
+    }
+
+    showSavedOverlay();
+    setTimeout(()=>{ window.location.href = "done.html" + (payload.jobId ? ("?id=" + encodeURIComponent(payload.jobId)) : ""); }, 650);
+  }
+
+  window.addEventListener("online",  updateNetBadge);
+  window.addEventListener("offline", updateNetBadge);
+
+  ensureEditableJob();
+  touchJobDraft();
+  loadHeader();
+  updateNetBadge();
+  initDate();
+  render();
+</script>
+<script>
+  (function () {
+    if (!("serviceWorker" in navigator)) return;
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("./service-worker.js").catch(function (err) {
+        console.warn("Service Worker Registrierung fehlgeschlagen:", err);
+      });
+    });
+  })();
+</script>
+</body>
+</html>

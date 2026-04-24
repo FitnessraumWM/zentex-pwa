@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="theme-color" content="#F5C400" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./icons/icon-192.png" />
+<link rel="apple-touch-icon" href="./icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<title>Job Abschluss – ZENTEX</title>
+<!-- ✅ ADDED – SharePoint REST API Modul -->
+<script src="./zentex-sp.js" defer></script>
+
+<style>
+  :root{
+    --bg:#f6f6f8;
+    --card:#fff;
+    --text:#111;
+    --muted:#5f6368;
+    --line:#e9e9ef;
+    --brand:#F5C400;
+    --ok:#1a7f37;
+    --bad:#b42318;
+    --warn:#b54708;
+    --shadow: 0 12px 35px rgba(0,0,0,.12);
+    --r2:22px;
+  }
+  html,body{height:100%}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
+  .wrap{max-width:980px;margin:0 auto;padding:18px 14px 28px;}
+
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 14px;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand img{height:36px;border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.10)}
+  .brand .t{display:flex;flex-direction:column;line-height:1.1}
+  .brand .t b{font-size:14px}
+  .brand .t span{font-size:12px;color:var(--muted)}
+
+  .pills{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+  .pill{font-size:12px;color:#111;background:#fff;border:1px solid var(--line);padding:6px 10px;border-radius:999px;display:flex;align-items:center;gap:8px;box-shadow:0 6px 16px rgba(0,0,0,.06)}
+  .dot{width:9px;height:9px;border-radius:999px;background:#bbb}
+  .dot.ok{background:var(--ok)}
+  .dot.bad{background:var(--bad)}
+  .dot.warn{background:var(--warn)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);box-shadow:var(--shadow);overflow:hidden}
+  .top{padding:14px 16px;border-bottom:1px solid var(--line)}
+  .top h1{margin:0;font-size:18px}
+  .top .sub{margin-top:6px;color:var(--muted);font-size:13px}
+  .body{padding:14px 16px}
+
+  .jobline{font-size:13px;color:var(--muted);margin:0 0 12px}
+  .jobline b{color:#111}
+
+  .sigWrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:860px){ .sigWrap{grid-template-columns:1fr;} }
+
+  .sigCard{border:1px solid var(--line);border-radius:18px;padding:12px;background:#fff}
+  .sigCard h2{margin:0 0 8px;font-size:14px}
+  .sigMeta{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px;margin-bottom:8px}
+  .inp{width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);outline:none;font-weight:700;font-size:14px;}
+  .hint{font-size:12px;color:var(--muted);margin:6px 0}
+  .sigPreview{
+    display:block;
+    width:100%;
+    height:80px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:#fafafa;
+    object-fit:contain;
+    margin-top:8px;
+  }
+  .sigPreview.hidden{ display:none; }
+
+  .sigBtns{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;}
+  .btn{appearance:none;border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer;font-size:14px;}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .btnPrimary{background:var(--brand);border-color:rgba(0,0,0,.12)}
+  .btnGhost{background:#fff}
+  .btnDanger{border-color:rgba(180,35,24,.30);color:var(--bad);background:rgba(180,35,24,.05)}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .actions .btn{padding:12px 16px}
+
+  .sigModal{
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #fff;
+    display: none;
+    flex-direction: column;
+    touch-action: none;
+    overflow: hidden;
+  }
+  .sigModal.open{ display:flex; }
+
+  @media (orientation: portrait) {
+    .sigModal.open{
+      width:  100vh;
+      height: 100vw;
+      top:    calc((100vh - 100vw) / 2);
+      left:   calc((100vw - 100vh) / 2);
+      transform: rotate(90deg);
+      transform-origin: center center;
+    }
+  }
+
+  .sigModal-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+    flex: 0 0 auto;
+    gap: 10px;
+  }
+  .sigModal-title{
+    font-weight: 900;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .sigModal-name{
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    font-size: 14px;
+    font-weight: 700;
+    outline: none;
+    min-width: 0;
+  }
+  .sigModal-name:focus{
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(245,196,0,.25);
+  }
+  .sigModal-btns{
+    display: flex;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+  .sigModal-btns .btn{
+    padding: 8px 14px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .sigModal-canvas{
+    flex: 1;
+    display: block;
+    width: 100%;
+    touch-action: none;
+    cursor: crosshair;
+    background: #fff;
+  }
+
+  .rotateHint{
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(17,17,17,.82);
+    color: #fff;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+    font-size: 16px;
+    font-weight: 800;
+    text-align: center;
+    padding: 24px;
+  }
+  @media (pointer: coarse) and (orientation: portrait) {
+    .rotateHint.visible{ display:flex; }
+  }
+  .rotateHint .icon{ font-size: 52px; animation: spin 1.2s ease-in-out infinite alternate; }
+  @keyframes spin{
+    from{ transform: rotate(-20deg); }
+    to{   transform: rotate(20deg);  }
+  }
+
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:8888;}
+  .overlay.on{display:flex}
+  .modal{background:#fff;border-radius:18px;max-width:420px;width:100%;padding:16px;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .modal h3{margin:0 0 6px}
+  .modal p{margin:0;color:var(--muted)}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <img src="./assets/logo.jpg" alt="ZENTEX" onerror="this.style.display='none'">
+      <div class="t">
+        <b>Sprinkler App</b>
+        <span>Job Abschluss</span>
+      </div>
+    </div>
+    <div class="pills">
+      <div class="pill"><span class="dot" id="netDot"></span><span id="netTxt">Netz: …</span></div>
+      <div class="pill"><span class="dot" id="sigDot"></span><span id="sigTxt">Unterschriften: …</span></div>
+      <div class="pill"><span class="dot" id="syncDot"></span><span id="syncTxt">Sync: …</span></div>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="top">
+      <h1>Unterschriften</h1>
+      <div class="sub">Name eingeben → Vollbild-Unterschrift öffnen → Speichern.</div>
+    </div>
+
+    <div class="body">
+      <p class="jobline" id="jobLine">…</p>
+
+      <div class="sigWrap">
+        <div class="sigCard">
+          <h2>Monteur</h2>
+          <div class="sigMeta">
+            <span>Name (Pflicht)</span>
+            <span id="sigMonteurState">nicht gespeichert</span>
+          </div>
+          <input id="sigMonteurName" class="inp" placeholder="Name des Monteurs" />
+          <div class="hint">Tippe auf „Unterschreiben" für Vollbild-Modus.</div>
+          <img id="previewMonteur" class="sigPreview hidden" src="" alt="Unterschrift Monteur" />
+          <div class="sigBtns">
+            <button class="btn btnPrimary" type="button" onclick="openSigModal('monteur')">✍️ Unterschreiben</button>
+            <button class="btn btnDanger"  type="button" onclick="deleteSig('monteur')">Löschen</button>
+          </div>
+        </div>
+
+        <div class="sigCard">
+          <h2>Ansprechperson</h2>
+          <div class="sigMeta">
+            <span>Name (Pflicht)</span>
+            <span id="sigAnsprechState">nicht gespeichert</span>
+          </div>
+          <input id="sigAnsprechName" class="inp" placeholder="Name der Ansprechperson" />
+          <div class="hint">Tippe auf „Unterschreiben" für Vollbild-Modus.</div>
+          <img id="previewAnsprech" class="sigPreview hidden" src="" alt="Unterschrift Ansprechperson" />
+          <div class="sigBtns">
+            <button class="btn btnPrimary" type="button" onclick="openSigModal('ansprech')">✍️ Unterschreiben</button>
+            <button class="btn btnDanger"  type="button" onclick="deleteSig('ansprech')">Löschen</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btnPrimary" type="button" id="btnClose" onclick="closeJob()">Job abschliessen</button>
+        <button class="btn btnGhost"   type="button" onclick="backToChecklist()">Zurück zur Checkliste</button>
+        <button class="btn btnGhost"   type="button" onclick="goHub()">Zur Startseite</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="rotateHint" id="rotateHint">
+  <div class="icon">📱</div>
+  <div>Bitte Handy drehen<br>oder einfach unterschreiben –<br>das Feld ist bereits quer.</div>
+</div>
+
+<div class="sigModal" id="sigModal">
+  <div class="sigModal-header">
+    <div class="sigModal-title" id="sigModalTitle">Unterschrift</div>
+    <input class="sigModal-name" id="sigModalName" placeholder="Name eingeben…" />
+    <div class="sigModal-btns">
+      <button class="btn"           type="button" onclick="clearModalCanvas()">Leeren</button>
+      <button class="btn btnPrimary" type="button" onclick="saveModalSig()">✓ Speichern</button>
+      <button class="btn btnGhost"  type="button" onclick="closeSigModal()">Abbrechen</button>
+    </div>
+  </div>
+  <canvas class="sigModal-canvas" id="sigModalCanvas"></canvas>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="ovTitle">Erledigt</h3>
+    <p  id="ovMsg">Job wurde gespeichert.</p>
+  </div>
+</div>
+
+<script>
+const KEY_META        = "zentex_chk_meta_v4";
+const KEY_FINAL_NOTE  = "zentex_chk_final_note_v4";
+const JOBS_KEY        = "zentex_offline_jobs_v1";
+const SYNC_QUEUE_KEY  = "zentex_sync_queue_v1";
+const CLOSE_QUEUE_KEY = "zentex_close_queue_v1";
+
+const MAX_JOBS = 50;
+
+function safeParse(txt, fb){ try{ return JSON.parse(txt); }catch(e){ return fb; } }
+function nowIso(){ return new Date().toISOString(); }
+function pick(...vals){ for(const v of vals){ const s=String(v||"").trim(); if(s) return s; } return ""; }
+function showOverlay(title, msg){
+  document.getElementById("ovTitle").textContent = title;
+  document.getElementById("ovMsg").textContent   = msg;
+  document.getElementById("overlay").classList.add("on");
+}
+function setPill(dotId, txtId, cls, text){
+  document.getElementById(dotId).className   = "dot " + cls;
+  document.getElementById(txtId).textContent = text;
+}
+function getJobs(){ return safeParse(localStorage.getItem(JOBS_KEY)||"[]",[]); }
+function saveJobs(a){ const copy=Array.isArray(a)?a.slice():[]; copy.sort((x,y)=>(y.updatedAt||0)-(x.updatedAt||0)); localStorage.setItem(JOBS_KEY,JSON.stringify(copy.slice(0, MAX_JOBS))); }
+function normalizeJob(job){
+  const status = String(job?.status || "draft");
+  return { ...job, status, locked: job?.locked === true || status === "done" || status === "synced" };
+}
+function getJobById(id){
+  return getJobs().map(normalizeJob).find(x => x.id === id) || null;
+}
+function updateJob(jobId, patch){
+  if(!jobId) return;
+  const all = getJobs().map(normalizeJob);
+  const idx = all.findIndex(x => x.id === jobId);
+  if(idx < 0) return;
+  all[idx] = { ...all[idx], ...patch, updatedAt: Date.now() };
+  saveJobs(all);
+}
+function isLocked(job){
+  return !!(job && (job.locked || job.status === "done" || job.status === "synced"));
+}
+
+const pageUrl  = new URL(location.href);
+const metaData = safeParse(localStorage.getItem(KEY_META) || "{}", {});
+let jobId = (pageUrl.searchParams.get("id") || "").trim();
+if(!jobId) jobId = String(metaData.jobId || "").trim();
+if(!jobId){
+  const all = getJobs();
+  const last = all && all.length ? all[0] : null;
+  if(last) jobId = String(last.id || "").trim();
+}
+if(jobId && !pageUrl.searchParams.get("id")){
+  const f = new URL(location.href); f.searchParams.set("id", jobId);
+  history.replaceState(null, "", f.toString());
+}
+
+function backToChecklist(){ location.href = "./checkliste.html" + (jobId ? ("?id="+encodeURIComponent(jobId)) : ""); }
+function goHub(){ location.href = "./index.html"; }
+
+function setJobLine(){
+  const o = pick(metaData.firma, metaData.objekt, metaData.kunde);
+  const s = pick(metaData.saznr, metaData.sazNr, metaData.saz);
+  const d = pick(metaData.serviceDatumCH, metaData.datum, metaData.serviceDatum);
+  const parts = [];
+  if(o) parts.push(o); if(s) parts.push("SAZ: "+s); if(d) parts.push(d);
+  document.getElementById("jobLine").innerHTML = parts.length
+    ? "<b>"+parts.join(" | ")+"</b>"
+    : "<b>Job Daten nicht gefunden.</b> (Bitte trotzdem unterschreiben.)";
+}
+
+function updateNetChip(){
+  const on = navigator.onLine;
+  setPill("netDot","netTxt", on?"ok":"bad", "Netz: "+(on?"online":"offline"));
+}
+function updateSyncChip(){
+  if(!jobId){ setPill("syncDot","syncTxt","warn","Sync: unbekannt"); return; }
+  const j=getJobById(jobId); const st=j?.status||"offen";
+  if(st==="synced")                  setPill("syncDot","syncTxt","ok",  "Sync: synchronisiert");
+  else if(st==="done")               setPill("syncDot","syncTxt","warn","Sync: abgeschlossen");
+  else if(st==="pending_upload")     setPill("syncDot","syncTxt","warn","Sync: offline wartend");
+  else if(st==="prepared_for_submit")setPill("syncDot","syncTxt","warn","Sync: bereit für Rapport");
+  else                               setPill("syncDot","syncTxt","warn","Sync: offen");
+}
+// 🔧 FIXED – Sync-Rückkanal: syncedJobIds lokal auf synced setzen
+async function trySyncPendingJobs(){
+  if(!navigator.onLine) return;
+  if(typeof ZentexSP !== "undefined"){
+    try{
+      var r = await ZentexSP.syncQueue();
+      if(r.synced > 0){
+        console.log("Auto-Sync: " + r.synced + " Jobs nach SharePoint synchronisiert.");
+        // Rückkanal: syncedJobIds lokal auf synced + locked setzen
+        if(r.syncedJobIds && r.syncedJobIds.length > 0){
+          var all = getJobs();
+          var changed = false;
+          r.syncedJobIds.forEach(function(sid){
+            var idx = all.findIndex(function(x){ return x.id === sid; });
+            if(idx >= 0 && all[idx].status !== "synced"){
+              all[idx].status    = "synced";
+              all[idx].locked    = true;
+              all[idx].updatedAt = Date.now();
+              changed = true;
+            }
+          });
+          if(changed) saveJobs(all);
+        }
+        updateSyncChip();
+      }
+    }catch(e){ console.warn("Auto-Sync:", e?.message||e); }
+  }
+}
+window.addEventListener("online",  ()=>{ updateNetChip(); trySyncPendingJobs(); });
+window.addEventListener("offline", updateNetChip);
+
+function sigKey(kind){ return `zentex_sig_${jobId||"nojob"}_${kind}_v1`; }
+function loadSig(kind){ return safeParse(localStorage.getItem(sigKey(kind))||"null",null); }
+function saveSigData(kind,data){ localStorage.setItem(sigKey(kind),JSON.stringify(data)); }
+function setSigState(){
+  const m = loadSig("monteur");
+  const a = loadSig("ansprech");
+
+  document.getElementById("sigMonteurState").textContent  = m ? "✓ gespeichert" : "nicht gespeichert";
+  document.getElementById("sigAnsprechState").textContent = a ? "✓ gespeichert" : "nicht gespeichert";
+
+  const pm = document.getElementById("previewMonteur");
+  const pa = document.getElementById("previewAnsprech");
+  if(m?.png){ pm.src=m.png; pm.classList.remove("hidden"); } else { pm.src=""; pm.classList.add("hidden"); }
+  if(a?.png){ pa.src=a.png; pa.classList.remove("hidden"); } else { pa.src=""; pa.classList.add("hidden"); }
+
+  setPill("sigDot","sigTxt",(m&&a)?"ok":"warn","Unterschriften: "+((m&&a)?"ok":"fehlen"));
+}
+function deleteSig(kind){
+  if(!confirm("Unterschrift wirklich löschen?")) return;
+  localStorage.removeItem(sigKey(kind));
+  setSigState();
+}
+
+let _activeKind   = null;
+let _modalCtx     = null;
+let _modalDrawing = false;
+let _modalLast    = null;
+
+function ensureJobClosable(){
+  const job = getJobById(jobId);
+  if(job && isLocked(job)){
+    alert("Dieser Job ist bereits abgeschlossen und kann nicht mehr verändert werden.");
+    location.href = "./offline.html";
+    throw new Error("LOCKED_JOB");
+  }
+}
+function openSigModal(kind){
+  ensureJobClosable();
+  _activeKind = kind;
+
+  const modal = document.getElementById("sigModal");
+  const hint  = document.getElementById("rotateHint");
+
+  document.getElementById("sigModalTitle").textContent =
+    kind === "monteur" ? "Monteur – Unterschrift" : "Ansprechperson – Unterschrift";
+
+  const nameInput = document.getElementById(kind==="monteur" ? "sigMonteurName" : "sigAnsprechName");
+  const stored    = loadSig(kind);
+  document.getElementById("sigModalName").value =
+    nameInput.value.trim() || stored?.name || "";
+
+  hint.classList.add("visible");
+  setTimeout(()=> hint.classList.remove("visible"), 2000);
+
+  modal.classList.add("open");
+  document.body.style.overflow = "hidden";
+
+  requestAnimationFrame(()=> requestAnimationFrame(()=>{
+    _initModalCanvas(stored?.png || null);
+  }));
+}
+function _initModalCanvas(existingPng){
+  const canvas = document.getElementById("sigModalCanvas");
+  const dpr    = Math.max(1, window.devicePixelRatio || 1);
+  const w      = canvas.offsetWidth  || window.innerWidth;
+  const h      = canvas.offsetHeight || (window.innerHeight - 56);
+
+  canvas.width  = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+
+  _modalCtx = canvas.getContext("2d");
+  _modalCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  _modalCtx.lineWidth   = 2.5;
+  _modalCtx.lineCap     = "round";
+  _modalCtx.lineJoin    = "round";
+  _modalCtx.strokeStyle = "#111";
+  _modalCtx.fillStyle   = "#fff";
+  _modalCtx.fillRect(0, 0, w, h);
+
+  if(existingPng){
+    const img = new Image();
+    img.onload = ()=> _modalCtx.drawImage(img, 0, 0, w, h);
+    img.src    = existingPng;
+  }
+}
+function _modalPos(e){
+  const canvas = document.getElementById("sigModalCanvas");
+  const r = canvas.getBoundingClientRect();
+  const p = e.touches?.[0] ?? e;
+  return { x: p.clientX - r.left, y: p.clientY - r.top };
+}
+function _modalStart(e){ _modalDrawing=true; _modalLast=_modalPos(e); e.preventDefault(); }
+function _modalMove(e){
+  if(!_modalDrawing || !_modalCtx) return;
+  const p = _modalPos(e);
+  _modalCtx.beginPath();
+  _modalCtx.moveTo(_modalLast.x, _modalLast.y);
+  _modalCtx.lineTo(p.x, p.y);
+  _modalCtx.stroke();
+  _modalLast = p;
+  e.preventDefault();
+}
+function _modalEnd(){ _modalDrawing=false; _modalLast=null; }
+
+function clearModalCanvas(){
+  if(!_modalCtx) return;
+  const canvas = document.getElementById("sigModalCanvas");
+  const dpr    = window.devicePixelRatio || 1;
+  _modalCtx.fillStyle = "#fff";
+  _modalCtx.fillRect(0, 0, canvas.width/dpr, canvas.height/dpr);
+}
+function saveModalSig(){
+  ensureJobClosable();
+  const name = document.getElementById("sigModalName").value.trim();
+  if(!name){ alert("Bitte Name eingeben (Pflicht)."); return; }
+  if(!jobId){ alert("JobId fehlt. Bitte zurück zur Checkliste."); return; }
+
+  const canvas = document.getElementById("sigModalCanvas");
+  const png = canvas.toDataURL("image/png");
+
+  saveSigData(_activeKind, { name, png, savedAt: Date.now() });
+
+  const mainNameId = _activeKind === "monteur" ? "sigMonteurName" : "sigAnsprechName";
+  document.getElementById(mainNameId).value = name;
+
+  setSigState();
+  closeSigModal();
+}
+function closeSigModal(){
+  document.getElementById("sigModal").classList.remove("open");
+  document.body.style.overflow = "";
+  _activeKind   = null;
+  _modalCtx     = null;
+  _modalDrawing = false;
+  _modalLast    = null;
+}
+(function attachModalEvents(){
+  const canvas = document.getElementById("sigModalCanvas");
+  canvas.addEventListener("mousedown",  _modalStart);
+  canvas.addEventListener("mousemove",  _modalMove);
+  window.addEventListener("mouseup",    _modalEnd);
+  canvas.addEventListener("touchstart", _modalStart, {passive:false});
+  canvas.addEventListener("touchmove",  _modalMove,  {passive:false});
+  canvas.addEventListener("touchend",   _modalEnd);
+})();
+
+function getSyncQueue(){ return safeParse(localStorage.getItem(SYNC_QUEUE_KEY)||"[]",[]); }
+function findChecklist(jid){
+  const q=getSyncQueue();
+  for(let i=q.length-1;i>=0;i--){
+    const it=q[i];
+    if(it?.type==="checkliste"&&it.payload){
+      const mid=String(it.payload?.meta?.jobId||it.payload?.jobId||"").trim();
+      if(mid===jid) return it.payload;
+    }
+  }
+  return null;
+}
+function upsertClosePayload(payload){
+  const q=safeParse(localStorage.getItem(CLOSE_QUEUE_KEY)||"[]",[]);
+  const idx=q.findIndex(entry => String(entry?.payload?.jobId || "") === String(payload?.jobId || ""));
+  const nextEntry = {type:"close",payload,queuedAt:Date.now(),status:"queued"};
+  if(idx >= 0) q[idx] = nextEntry;
+  else q.push(nextEntry);
+  localStorage.setItem(CLOSE_QUEUE_KEY,JSON.stringify(q));
+}
+// ✅ ADDED – Vereinheitlichte E-Mail-Logik
+function buildUnifiedEmails(meta){
+  const ansprechmail       = String(meta?.ansprechmail || "").trim();
+  const emailKunde         = String(meta?.emailKunde || "").trim();
+  const auftragsleiterMail = String(meta?.auftragsleiterMail || "").trim();
+
+  // kundeEmail: ansprechmail hat Vorrang, sonst emailKunde
+  const kundeEmail = ansprechmail || emailKunde || "";
+
+  // externalEmails: alle vorhandenen externen, dedupliziert
+  const extSet = new Set();
+  if(ansprechmail) extSet.add(ansprechmail);
+  if(emailKunde)   extSet.add(emailKunde);
+  const externalEmails = Array.from(extSet);
+
+  // internalEmail: Auftragsleiter
+  const internalEmail = auftragsleiterMail;
+
+  return { kundeEmail, externalEmails, internalEmail };
+}
+
+function buildPayload(){
+  const sigM=loadSig("monteur"); const sigA=loadSig("ansprech");
+  const chk=findChecklist(jobId);
+
+  // ✅ ADDED – bestehende Rohfelder + vereinheitlichte Felder
+  const unified = buildUnifiedEmails(metaData);
+
+  return {
+    jobId, closedAt:nowIso(), meta:metaData,
+    checklist:chk?.items||null, checklistSavedAt:chk?.savedAt||null,
+    signatures:{
+      monteur:  sigM?{name:sigM.name,png:sigM.png}:null,
+      ansprech: sigA?{name:sigA.name,png:sigA.png}:null
+    },
+    finalNote: localStorage.getItem(KEY_FINAL_NOTE)||null,
+
+    // ✅ ADDED – Bestehende Rohfelder beibehalten
+    ansprechmail:       String(metaData?.ansprechmail || "").trim(),
+    emailKunde:         String(metaData?.emailKunde || "").trim(),
+    auftragsleiterMail: String(metaData?.auftragsleiterMail || "").trim(),
+
+    // ✅ ADDED – Vereinheitlichte Felder für Power Automate
+    kundeEmail:     unified.kundeEmail,
+    externalEmails: unified.externalEmails,
+    internalEmail:  unified.internalEmail
+  };
+}
+let closing = false;
+async function closeJob(){
+  if(closing) return;
+  ensureJobClosable();
+  closing=true;
+  const btn=document.getElementById("btnClose");
+  if(btn) btn.disabled=true;
+  try{
+    // 1. Signaturen aus Namensfeld aktualisieren (falls Name nachträglich geändert)
+    const sigMonteurName = document.getElementById("sigMonteurName").value.trim();
+    const sigAnsprechName = document.getElementById("sigAnsprechName").value.trim();
+
+    if(sigMonteurName){
+      const s = loadSig("monteur");
+      if (s && s.png) saveSigData("monteur", { ...s, name: sigMonteurName, savedAt: Date.now() });
+    }
+    if(sigAnsprechName){
+      const s = loadSig("ansprech");
+      if (s && s.png) saveSigData("ansprech", { ...s, name: sigAnsprechName, savedAt: Date.now() });
+    }
+
+    // 2. Validierung
+    if(!loadSig("monteur")||!loadSig("ansprech")){
+      alert("Bitte beide Pflicht-Unterschriften speichern."); return;
+    }
+    const payload=buildPayload();
+    if(!payload.checklist){
+      alert("Checkliste ist nicht offline gespeichert.\nBitte zurück zur Checkliste und auf \"Speichern\" drücken."); return;
+    }
+    if(!payload.signatures.monteur?.name || !payload.signatures.ansprech?.name){
+      alert("Bitte beide Namen für die Unterschriften eingeben.");
+      return;
+    }
+
+    // 3. Close-Payload speichern
+    upsertClosePayload(payload);
+
+    // 4. Job auf prepared_for_submit vorbereiten (noch NICHT locked – erst nach finalem Submit im Rapport)
+    updateJob(jobId, {status:"prepared_for_submit", locked:false, completedAt:Date.now()});
+    updateSyncChip();
+
+    // 5. Weiterleitung zum Rapport (KEIN Submit, KEIN Cleanup hier)
+    showOverlay("Weiter zum Rapport","Daten gesichert. Weiterleitung…");
+    setTimeout(()=>{
+      location.href = "./Checkliste_rapport.html?id=" + encodeURIComponent(jobId);
+    }, 700);
+  }catch(err){
+    if (!String(err && err.message || err).includes("LOCKED_JOB")) {
+      console.error(err);
+      showOverlay("Fehler","Es gab ein Problem. Daten bleiben erhalten.");
+    }
+  }finally{
+    if(btn) btn.disabled=false;
+    closing=false;
+  }
+}
+
+(function init(){
+  const job = getJobById(jobId);
+  if(job && isLocked(job)){
+    alert("Dieser Job ist bereits abgeschlossen und kann nicht mehr verändert werden.");
+    location.href = "./offline.html";
+    return;
+  }
+  setJobLine();
+  setSigState();
+  updateNetChip();
+  updateSyncChip();
+  trySyncPendingJobs();
+})();
+</script>
+<script>
+  (function(){
+    if(!("serviceWorker" in navigator)) return;
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("./service-worker.js")
+        .catch(err=>console.warn("SW:",err));
+    });
+  })();
+</script>
+</body>
+</html>

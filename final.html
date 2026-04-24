@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="theme-color" content="#F5C400" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./icons/icon-192.png" />
+<link rel="apple-touch-icon" href="./icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<title>Erledigt – ZENTEX</title>
+
+<style>
+:root{
+  --accent:#F5C400;
+  --bg:#F6F7F9;
+  --ink:#111;
+  --muted:#6b7280;
+  --line: rgba(17,17,17,.10);
+  --shadow:0 16px 34px rgba(0,0,0,.10);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui, Segoe UI, Arial;
+  background:
+    radial-gradient(900px 520px at 20% 10%, rgba(245,196,0,.18), transparent 60%),
+    radial-gradient(900px 520px at 90% 20%, rgba(0,0,0,.08), transparent 60%),
+    var(--bg);
+  padding:18px;
+  color:var(--ink);
+}
+.wrap{max-width:760px;margin:0 auto; padding:20px 0;}
+.card{
+  background:rgba(255,255,255,.86);
+  backdrop-filter: blur(10px);
+  border:1px solid var(--line);
+  border-radius:26px;
+  box-shadow:var(--shadow);
+  padding:18px;
+}
+h1{margin:0 0 6px 0; font-size:20px;}
+.sub{margin:0; color:var(--muted); font-weight:650; font-size:13px; line-height:1.35;}
+.check{
+  margin-top:14px;
+  width:64px;height:64px;border-radius:999px;
+  background:rgba(22,163,74,.10);
+  border:2px solid rgba(22,163,74,.25);
+  display:flex;align-items:center;justify-content:center;
+  font-size:34px;
+  animation: pop .5s ease both;
+}
+@keyframes pop{
+  0%{transform:scale(.6); opacity:.2}
+  100%{transform:scale(1); opacity:1}
+}
+.actions{margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;}
+.btn{
+  border:0; cursor:pointer;
+  padding:14px 16px;
+  border-radius:999px;
+  font-weight:900;
+  box-shadow:0 10px 22px rgba(0,0,0,.08);
+  min-width:180px;
+  background:#fff;
+  border:1px solid var(--line);
+  color:var(--ink);
+}
+.btnPrimary{
+  background:linear-gradient(180deg, rgba(245,196,0,1), rgba(245,196,0,.88));
+  border:none;
+}
+@media (max-width:520px){ .btn{flex:1; min-width:0;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Erledigt</h1>
+    <p class="sub" id="metaLine">Job abgeschlossen.</p>
+
+    <div class="check">✓</div>
+
+    <div class="actions">
+      <button class="btn btnPrimary" type="button" onclick="goHub()">Zur Startseite</button>
+      <button class="btn" type="button" onclick="newJob()">Neuer Job</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const META_KEY  = "zentex_chk_meta_v4";
+const JOBS_KEY  = "zentex_offline_jobs_v1";
+const MAX_JOBS  = 50;
+
+function safeParse(j,f){ try{return JSON.parse(j)}catch(e){return f} }
+
+const url    = new URL(location.href);
+const meta   = safeParse(localStorage.getItem(META_KEY) || "{}", {});
+const jobId  = url.searchParams.get("id") || meta.jobId || "";
+
+// 🔧 FIXED – final.html ist jetzt rein lesend: kein Status-Mutation, kein Job-Erstellen
+function findJob(id){
+  if(!id) return null;
+  const all = safeParse(localStorage.getItem(JOBS_KEY) || "[]", []);
+  return all.find(x => x && x.id === id) || null;
+}
+
+function displayJobInfo(){
+  if(!jobId){
+    document.getElementById("metaLine").textContent = "Keine Job-ID vorhanden. Bitte nicht erneut abschliessen, sondern zum letzten Schritt zurück.";
+    return;
+  }
+  const job = findJob(jobId);
+  if(!job){
+    document.getElementById("metaLine").textContent = "Job \"" + jobId + "\" nicht im lokalen Speicher gefunden.";
+    return;
+  }
+  // Anzeige-Teile aus Job-Daten (nicht aus Meta, da Meta möglicherweise veraltet)
+  const infoParts = [];
+  const f = (job.firma || job.objekt || "").trim();
+  const k = (job.kunde || "").trim();
+  const s = (job.saznr || "").trim();
+  const d = (job.serviceDatumCH || "").trim();
+  if (f) infoParts.push(f);
+  if (k && k !== f) infoParts.push(k);
+  if (s) infoParts.push("SAZ: " + s);
+  if (d) infoParts.push(d);
+  if (infoParts.length){
+    document.getElementById("metaLine").textContent = infoParts.join(" | ");
+  }
+}
+
+function goHub(){
+  window.location.href = "./index.html";
+}
+
+function newJob(){
+  const currentId = jobId;
+
+  localStorage.removeItem("currentInstandsetzungHeader");
+  localStorage.removeItem(META_KEY);
+  localStorage.removeItem("zentex_chk_final_note_v4");
+  localStorage.removeItem("zentex_regie_draft_v1");
+
+  const prefix = "zentex_chk_v4_item_";
+
+  // 🔧 FIXED – Nur Checklisten-Items des aktuellen Jobs löschen
+  const jobPrefix = currentId ? (prefix + currentId + "_") : null;
+  const toDelete = [];
+  for(let i = 0; i < localStorage.length; i++){
+    const k = localStorage.key(i);
+    if(!k) continue;
+    // Job-spezifischer Key: prefix + jobId + "_" + nr
+    if(jobPrefix && k.startsWith(jobPrefix)){
+      toDelete.push(k);
+    }
+    // Legacy globaler Key: prefix + reine Zahl
+    else if(k.startsWith(prefix)){
+      const rest = k.slice(prefix.length);
+      if(/^\d+$/.test(rest)) toDelete.push(k);
+    }
+  }
+  if(currentId){
+    toDelete.push(`zentex_sig_${currentId}_monteur_v1`);
+    toDelete.push(`zentex_sig_${currentId}_ansprech_v1`);
+  }
+  toDelete.forEach(k => localStorage.removeItem(k));
+
+  window.location.href = "./offline.html";
+}
+
+displayJobInfo();
+</script>
+<script>
+  (function () {
+    if (!("serviceWorker" in navigator)) return;
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("./service-worker.js").catch(function (err) {
+        console.warn("Service Worker Registrierung fehlgeschlagen:", err);
+      });
+    });
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./icons/icon-192.png" />
+<link rel="apple-touch-icon" href="./icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<title>Letzte 50 Jobs (offline) – ZENTEX</title>
+<script src="./zentex-sp.js" defer></script>
+
+<style>
+:root{
+  --zentex-yellow:#F5C400;
+  --ink:#111;
+  --muted:#6b7280;
+  --bg:#F6F7F9;
+  --radius:18px;
+  --shadow:0 18px 40px rgba(0,0,0,.10);
+  --line: rgba(17,17,17,.10);
+  --ok:#15803d;
+  --warn:#b45309;
+  --draft:#92400e;
+  --done:#475569;
+  --danger:#b91c1c;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui, Segoe UI, Arial;
+  color:var(--ink);
+  background:
+    radial-gradient(900px 520px at 20% 10%, rgba(245,196,0,.18), transparent 60%),
+    radial-gradient(900px 520px at 90% 20%, rgba(0,0,0,.08), transparent 60%),
+    var(--bg);
+  padding:24px 16px;
+}
+.shell{ max-width:980px; margin:0 auto; }
+.card{
+  background: rgba(255,255,255,.86);
+  backdrop-filter: blur(10px);
+  border:1px solid var(--line);
+  border-radius: 26px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--line);
+}
+h1{ margin:0; font-size:18px; }
+.sub{ margin:6px 0 0 0; color:var(--muted); font-size:12px; font-weight:700; line-height:1.35; }
+.badge{
+  padding:7px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.70);
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.actions,.toolbar,.filterRow,.jobActions{
+  margin-top:14px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.toolbar{ align-items:center; }
+.search{
+  flex:1 1 280px;
+  min-width:220px;
+  padding:12px 14px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:#fff;
+  font-size:14px;
+  outline:none;
+}
+.select{
+  padding:12px 14px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:#fff;
+  font-size:14px;
+  outline:none;
+}
+.btn{
+  border:1px solid var(--line);
+  background:#fff;
+  padding:12px 14px;
+  border-radius:999px;
+  cursor:pointer;
+  font-weight:900;
+  box-shadow:0 10px 22px rgba(0,0,0,.08);
+}
+.btnPrimary{
+  border:0;
+  background: linear-gradient(180deg, rgba(245,196,0,1), rgba(245,196,0,.88));
+}
+.btnDanger{
+  color:var(--danger);
+  border-color:rgba(185,28,28,.18);
+  background:rgba(185,28,28,.04);
+}
+.btnSmall{
+  padding:10px 12px;
+  font-size:13px;
+  box-shadow:none;
+}
+.btn[disabled]{
+  opacity:.55;
+  cursor:not-allowed;
+}
+.list{ margin-top:14px; }
+.jobRow{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background: rgba(255,255,255,.72);
+  margin-bottom:10px;
+}
+.jobMain{ min-width:0; flex:1; }
+.jobTop{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  justify-content:space-between;
+  flex-wrap:wrap;
+}
+.jobTitle{ font-weight:900; font-size:15px; }
+.jobMeta{ color:var(--muted); font-size:12px; font-weight:750; margin-top:6px; line-height:1.5; }
+.metaLine{ display:block; }
+.statusBadge{
+  padding:7px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.status-draft{ background:rgba(245,196,0,.18); color:var(--draft); border-color:rgba(180,83,9,.20); }
+.status-prepared_for_submit{ background:rgba(59,130,246,.12); color:#1d4ed8; border-color:rgba(59,130,246,.20); }
+.status-pending_upload{ background:rgba(245,158,11,.12); color:var(--warn); border-color:rgba(180,83,9,.20); }
+.status-done{ background:rgba(71,85,105,.10); color:var(--done); border-color:rgba(71,85,105,.20); }
+.status-synced{ background:rgba(21,128,61,.10); color:var(--ok); border-color:rgba(21,128,61,.20); }
+.empty{
+  color:var(--muted);
+  font-weight:750;
+  padding:12px;
+  border:1px dashed var(--line);
+  border-radius:16px;
+  background: rgba(255,255,255,.55);
+}
+.footer{
+  margin-top:12px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+a{ color:#555; text-decoration:none; font-weight:800; }
+@media (max-width:700px){
+  .jobRow{ flex-direction:column; }
+}
+@media (max-width:520px){
+  .btn{flex:1;}
+  .search,.select{ width:100%; }
+}
+</style>
+</head>
+
+<body>
+<div class="shell">
+  <div class="card">
+    <div class="header">
+      <div>
+        <h1>Letzte 50 Jobs (offline)</h1>
+        <p class="sub">Statusgesperrte Jobs können nicht mehr bearbeitet werden. Löschen ist weiterhin pro Job möglich.</p>
+      </div>
+      <div class="badge" id="netBadge">Netz: prüfen…</div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btnPrimary" onclick="createJob()">+ Neuer Job</button>
+      <button type="button" class="btn" onclick="render()">↻ Aktualisieren</button>
+      <button type="button" class="btn btnDanger" onclick="confirmClear()">🗑️ Alles löschen</button>
+    </div>
+
+    <div class="toolbar">
+      <input id="searchInput" class="search" type="search" placeholder="Suchen nach Objekt, Kunde, SAZ oder Job-ID" />
+      <select id="sortSelect" class="select">
+        <option value="updated">Sortierung: zuletzt bearbeitet</option>
+        <option value="created">Sortierung: erstellt</option>
+        <option value="status">Sortierung: Status</option>
+      </select>
+    </div>
+
+    <div class="filterRow">
+      <button type="button" class="btn btnSmall" data-filter="all" onclick="setFilter('all')">Alle</button>
+      <button type="button" class="btn btnSmall" data-filter="open" onclick="setFilter('open')">Offen</button>
+      <button type="button" class="btn btnSmall" data-filter="done" onclick="setFilter('done')">Abgeschlossen</button>
+      <button type="button" class="btn btnSmall" data-filter="synced" onclick="setFilter('synced')">Synchronisiert</button>
+      <button type="button" class="btn btnSmall" data-filter="today" onclick="setFilter('today')">Nur heute</button>
+    </div>
+
+    <div class="list" id="list"></div>
+
+    <div class="footer">
+      <div class="badge" id="countBadge">0 Jobs</div>
+      <a href="index.html">← Zurück</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const JOBS_KEY = "zentex_offline_jobs_v1";
+const META_KEY = "zentex_chk_meta_v4";
+const MAX_JOBS = 50;
+let activeFilter = "all";
+
+function safeParse(j,f){ try{return JSON.parse(j)}catch(e){return f} }
+
+function todayISO(){
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+function toCHDate(iso){
+  try{ return new Date(iso + "T00:00:00").toLocaleDateString("de-CH"); }catch(e){ return ""; }
+}
+function fmtCH(ts){
+  try{ return new Date(ts).toLocaleString("de-CH"); }catch(e){ return ""; }
+}
+function uid(){
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return "job_" + Date.now() + "_" + Math.random().toString(16).slice(2,10);
+}
+function normalizeJob(job){
+  const status = String(job?.status || "draft");
+  // 🔧 FIX – pending_upload gilt fachlich als gesperrt (nicht mehr bearbeitbar)
+  const locked = job?.locked === true || status === "done" || status === "synced" || status === "pending_upload";
+  return {
+    ...job,
+    id: String(job?.id || ""),
+    status,
+    locked,
+    completedAt: job?.completedAt || null
+  };
+}
+function loadAllJobs(){
+  return safeParse(localStorage.getItem(JOBS_KEY) || "[]", []).map(normalizeJob);
+}
+function saveJobs(all){
+  const copy = Array.isArray(all) ? all.slice() : [];
+  copy.sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+  localStorage.setItem(JOBS_KEY, JSON.stringify(copy.slice(0, MAX_JOBS)));
+}
+function getSortValue(job, mode){
+  if (mode === "created") return Number(job.createdAt || 0);
+  if (mode === "status") {
+    const order = { draft:5, prepared_for_submit:4, pending_upload:3, done:2, synced:1 };
+    return order[job.status] || 0;
+  }
+  return Number(job.updatedAt || 0);
+}
+function getStatusLabel(job){
+  if (job.status === "synced") return "Synchronisiert";
+  if (job.status === "done") return "Abgeschlossen";
+  if (job.status === "pending_upload") return "Wartet auf Sync";
+  if (job.status === "prepared_for_submit") return "Bereit für Rapport";
+  return "Entwurf";
+}
+function setNetBadge(){
+  document.getElementById("netBadge").textContent = "Netz: " + (navigator.onLine ? "online" : "offline");
+}
+// 🔧 ADDED – Auto-Sync mit Rückkanal
+async function trySyncOffline(){
+  if(!navigator.onLine || typeof ZentexSP === "undefined") return;
+  try{
+    var r = await ZentexSP.syncQueue();
+    if(r.synced > 0 && r.syncedJobIds && r.syncedJobIds.length > 0){
+      var all = loadAllJobs();
+      var changed = false;
+      r.syncedJobIds.forEach(function(sid){
+        var idx = all.findIndex(function(x){ return x.id === sid; });
+        if(idx >= 0 && all[idx].status !== "synced"){
+          all[idx].status    = "synced";
+          all[idx].locked    = true;
+          all[idx].updatedAt = Date.now();
+          changed = true;
+        }
+      });
+      if(changed){ saveJobs(all); render(); }
+      console.log("Offline-Sync: " + r.synced + " Jobs synchronisiert.");
+    }
+  }catch(e){ console.warn("Offline-Sync:", e?.message||e); }
+}
+window.addEventListener("online", function(){ setNetBadge(); trySyncOffline(); });
+window.addEventListener("offline", setNetBadge);
+setNetBadge();
+// Initial sync bei Seitenaufruf
+setTimeout(trySyncOffline, 1500);
+
+function setFilter(name){
+  activeFilter = name;
+  document.querySelectorAll("[data-filter]").forEach(btn => {
+    btn.style.outline = btn.dataset.filter === name ? "3px solid rgba(245,196,0,.30)" : "none";
+  });
+  render();
+}
+function matchesFilter(job){
+  if (activeFilter === "open") return job.status === "draft" || job.status === "prepared_for_submit";
+  if (activeFilter === "done") return job.status === "done" || job.status === "pending_upload";
+  if (activeFilter === "synced") return job.status === "synced";
+  if (activeFilter === "today") return (job.serviceDatum || "") === todayISO();
+  return true;
+}
+function matchesSearch(job, q){
+  if (!q) return true;
+  const hay = [
+    job.id,
+    job.objekt,
+    job.firma,
+    job.kunde,
+    job.saznr,
+    job.anlageart,
+    job.servicemonteur
+  ].join(" ").toLowerCase();
+  return hay.includes(q);
+}
+function getVisibleJobs(){
+  const search = (document.getElementById("searchInput").value || "").trim().toLowerCase();
+  const sortMode = document.getElementById("sortSelect").value;
+  return loadAllJobs()
+    .filter(matchesFilter)
+    .filter(j => matchesSearch(j, search))
+    .sort((a,b) => {
+      const av = getSortValue(a, sortMode);
+      const bv = getSortValue(b, sortMode);
+      if (sortMode === "status" && bv === av) return (b.updatedAt || 0) - (a.updatedAt || 0);
+      return bv - av;
+    })
+    .slice(0, MAX_JOBS);
+}
+function render(){
+  const jobs = getVisibleJobs();
+  document.getElementById("countBadge").textContent = jobs.length + " Jobs";
+  const root = document.getElementById("list");
+
+  if(!jobs.length){
+    root.innerHTML = `<div class="empty">Keine Jobs für den aktuellen Filter gefunden.</div>`;
+    return;
+  }
+
+  root.innerHTML = jobs.map(j=>{
+    const titel   = (j.objekt || j.firma || "").trim() || "(ohne Objekt)";
+    const datum   = j.serviceDatumCH ? `Datum: ${j.serviceDatumCH}` : "Datum: -";
+    const kunde   = j.kunde  ? `Kunde: ${j.kunde}`   : "Kunde: -";
+    const saz     = j.saznr  ? `SAZ: ${j.saznr}`     : "SAZ: -";
+    const anlage  = j.anlageart ? `Anlage: ${j.anlageart}` : "Anlage: -";
+    const zuletzt = j.updatedAt ? `zuletzt: ${fmtCH(j.updatedAt)}` : "";
+    const completed = j.completedAt ? `abgeschlossen: ${fmtCH(j.completedAt)}` : "";
+    const editable = !(j.locked || j.status === "done" || j.status === "synced");
+    return `
+      <div class="jobRow">
+        <div class="jobMain">
+          <div class="jobTop">
+            <div class="jobTitle">${escapeHtml(titel)}</div>
+            <div class="statusBadge status-${escapeAttr(j.status)}">${escapeHtml(getStatusLabel(j))}</div>
+          </div>
+          <div class="jobMeta">
+            <span class="metaLine">${escapeHtml(datum)} • ${escapeHtml(kunde)} • ${escapeHtml(saz)}</span>
+            <span class="metaLine">${escapeHtml(anlage)} • ${escapeHtml(zuletzt || "zuletzt: -")}</span>
+            ${completed ? `<span class="metaLine">${escapeHtml(completed)}</span>` : ""}
+            <span class="metaLine">Job-ID: ${escapeHtml(j.id)}</span>
+          </div>
+        </div>
+        <div class="jobActions">
+          <button type="button" class="btn btnSmall" ${editable ? "" : "disabled"} onclick="openJob('${escapeAttr(j.id)}')">${editable ? "Bearbeiten" : "Gesperrt"}</button>
+          <button type="button" class="btn btnSmall btnDanger" onclick="deleteJob('${escapeAttr(j.id)}')">Löschen</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+let creatingJob = false;
+
+function createJob(){
+  if(creatingJob) return;
+  creatingJob = true;
+
+  try{
+    const id           = uid();
+    const now          = Date.now();
+    const serviceDatum = todayISO();
+    const chDate       = toCHDate(serviceDatum);
+
+    const job = {
+      id,
+      objekt: "",
+      kunde: "",
+      firma: "",
+      saznr: "",
+      anlageart: "",
+      servicemonteur: "",
+      ansprechperson: "",
+      ansprechmail: "",
+      serviceDatum,
+      serviceDatumCH: chDate,
+      status: "draft",
+      locked: false,
+      completedAt: null,
+      createdAt: now,
+      updatedAt: now
+    };
+
+    const all = loadAllJobs();
+    all.unshift(job);
+    saveJobs(all);
+
+    localStorage.setItem(META_KEY, JSON.stringify({
+      jobId: id,
+      objekt: "",
+      kunde: "",
+      firma: "",
+      saznr: "",
+      anlageart: "",
+      servicemonteur: "",
+      serviceDatum,
+      serviceDatumCH: chDate,
+      serviceDateIso: serviceDatum,
+      datum: chDate,
+      status: "draft",
+      locked: false,
+      completedAt: null,
+      backUrl: "offline.html",
+      hubUrl: "index.html"
+    }));
+
+    window.location.href = "instandsetzung.html?id=" + encodeURIComponent(id);
+
+  }catch(err){
+    console.error(err);
+    alert("Fehler beim Erstellen des Jobs. Details in der Konsole.");
+    creatingJob = false;
+  }
+}
+
+function openJob(id){
+  const all = loadAllJobs();
+  const job = all.find(x => x.id === id);
+  if(!job){
+    alert("Job nicht gefunden (localStorage).");
+    return;
+  }
+  if(job.locked || job.status === "done" || job.status === "synced"){
+    alert("Dieser Job ist bereits abgeschlossen und kann nicht mehr bearbeitet werden.");
+    render();
+    return;
+  }
+
+  localStorage.setItem(META_KEY, JSON.stringify({
+    jobId: job.id,
+    objekt: job.objekt || "",
+    kunde: job.kunde || "",
+    firma: job.firma || job.objekt || "",
+    saznr: job.saznr || "",
+    anlageart: job.anlageart || "",
+    servicemonteur: job.servicemonteur || "",
+    ansprechperson: job.ansprechperson || "",
+    ansprechmail: job.ansprechmail || "",
+    serviceDatum: job.serviceDatum || todayISO(),
+    serviceDatumCH: job.serviceDatumCH || toCHDate(job.serviceDatum || todayISO()),
+    serviceDateIso: job.serviceDatum || todayISO(),
+    datum: job.serviceDatumCH || toCHDate(job.serviceDatum || todayISO()),
+    status: job.status || "draft",
+    locked: !!job.locked,
+    completedAt: job.completedAt || null,
+    backUrl: "offline.html",
+    hubUrl: "index.html",
+    type: job.type || "checkliste"
+  }));
+
+  // Regie-Jobs → regie.html, Checkliste-Jobs → instandsetzung.html
+  if (job.type === "regie"){
+    window.location.href = "regie.html?id=" + encodeURIComponent(id);
+  } else {
+    window.location.href = "instandsetzung.html?id=" + encodeURIComponent(id);
+  }
+}
+
+function deleteJob(id){
+  const all = loadAllJobs();
+  const job = all.find(x => x.id === id);
+  if(!job) return;
+  const title = job.objekt || job.firma || job.kunde || job.id;
+  if(!confirm(`Diesen Job wirklich löschen?\n\n${title}\n${job.id}`)) return;
+
+  const next = all.filter(x => x.id !== id);
+  saveJobs(next);
+
+  // 🔧 FIXED – Vollständiger Cleanup: Signaturen, Queue UND Item-Keys
+  [
+    `zentex_sig_${id}_monteur_v1`,
+    `zentex_sig_${id}_ansprech_v1`
+  ].forEach(k => localStorage.removeItem(k));
+
+  // Checklist-Item-Keys des Jobs löschen
+  const prefix = "zentex_chk_v4_item_";
+  const jobPrefix = prefix + id + "_";
+  const toDelete = [];
+  for(let i = 0; i < localStorage.length; i++){
+    const k = localStorage.key(i);
+    if(!k) continue;
+    if(k.startsWith(jobPrefix)) toDelete.push(k);
+  }
+  toDelete.forEach(k => localStorage.removeItem(k));
+
+  cleanupQueueForJob(id);
+  render();
+}
+
+function cleanupQueueForJob(id){
+  // 🔧 FIX 1 – echten SP-Queue-Key bereinigen via ZentexSP-Methode
+  if(typeof ZentexSP !== "undefined" && ZentexSP.removeJobFromQueue){
+    ZentexSP.removeJobFromQueue(id).catch(function(e){
+      console.warn("Queue-Cleanup für Job", id, "fehlgeschlagen:", e && e.message || e);
+    });
+  }
+  // Legacy-Keys (können sicher mitgelöscht werden, auch wenn leer)
+  const syncQ = safeParse(localStorage.getItem("zentex_sync_queue_v1") || "[]", []);
+  const closeQ = safeParse(localStorage.getItem("zentex_close_queue_v1") || "[]", []);
+  localStorage.setItem("zentex_sync_queue_v1", JSON.stringify(
+    syncQ.filter(entry => String(entry?.payload?.meta?.jobId || entry?.payload?.jobId || "") !== id)
+  ));
+  localStorage.setItem("zentex_close_queue_v1", JSON.stringify(
+    closeQ.filter(entry => String(entry?.payload?.jobId || "") !== id)
+  ));
+}
+
+function confirmClear(){
+  if(!confirm("Wirklich alle offline Jobs auf diesem Gerät löschen?")) return;
+
+  // 🔧 FIXED – Alle job-bezogenen Daten löschen, nicht nur JOBS_KEY
+  const all = loadAllJobs();
+  all.forEach(function(job){
+    const id = job.id;
+    if(!id) return;
+    localStorage.removeItem(`zentex_sig_${id}_monteur_v1`);
+    localStorage.removeItem(`zentex_sig_${id}_ansprech_v1`);
+    // Item-Keys
+    const prefix = "zentex_chk_v4_item_" + id + "_";
+    const toDelete = [];
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith(prefix)) toDelete.push(k);
+    }
+    toDelete.forEach(k => localStorage.removeItem(k));
+  });
+
+  // Legacy globale Item-Keys aufräumen
+  const legacyPrefix = "zentex_chk_v4_item_";
+  const legacyDelete = [];
+  for(let i = 0; i < localStorage.length; i++){
+    const k = localStorage.key(i);
+    if(k && k.startsWith(legacyPrefix)){
+      const rest = k.slice(legacyPrefix.length);
+      if(/^\d+$/.test(rest)) legacyDelete.push(k);
+    }
+  }
+  legacyDelete.forEach(k => localStorage.removeItem(k));
+
+  // Queues und Jobs-Liste
+  localStorage.removeItem(JOBS_KEY);
+  localStorage.removeItem("zentex_sync_queue_v1");
+  localStorage.removeItem("zentex_close_queue_v1");
+  localStorage.removeItem(META_KEY);
+  localStorage.removeItem("zentex_chk_final_note_v4");
+  localStorage.removeItem("zentex_regie_draft_v1");
+  localStorage.removeItem("currentInstandsetzungHeader");
+
+  // 🔧 FIX 1 – echten SP-Queue-Key + IndexedDB-PDFs bereinigen
+  if(typeof ZentexSP !== "undefined" && ZentexSP.clearAllQueued){
+    ZentexSP.clearAllQueued().catch(function(e){
+      console.warn("SP-Queue vollständig löschen fehlgeschlagen:", e && e.message || e);
+    });
+  }
+
+  render();
+}
+
+function escapeHtml(s){
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function escapeAttr(s){ return escapeHtml(s).replaceAll('"',"&quot;"); }
+
+document.getElementById("searchInput").addEventListener("input", render);
+document.getElementById("sortSelect").addEventListener("change", render);
+
+setFilter("all");
+</script>
+<script>
+  (function () {
+    if (!("serviceWorker" in navigator)) return;
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("./service-worker.js").catch(function (err) {
+        console.warn("Service Worker Registrierung fehlgeschlagen:", err);
+      });
+    });
+  })();
+</script>
+</body>
+</html>
