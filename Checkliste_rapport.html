@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkliste Instandhaltung Sprinkleranlagen – Zentex</title>
+<script src="./zentex-sp.js" defer></script>
+<script src="./vendor/html2pdf.bundle.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', Arial, sans-serif;
+    font-size: 10.5px;
+    background: #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .page {
+    background: #fff;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm 12mm 8mm 12mm;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+  }
+
+  /* HEADER */
+  .header { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:4px; margin-bottom:6px; border-bottom:none; }
+  .logo-svg { width:52px; height:52px; }
+  .header-contact { font-size:9.5px; color:#333; text-align:center; flex:1; padding-top:8px; }
+
+  /* TITLE */
+  .title-row { display:flex; align-items:baseline; gap:10px; margin:8px 0 4px 0; border-bottom:2px solid #000; padding-bottom:4px; }
+  .title-checkliste { font-size:22px; font-weight:700; letter-spacing:1px; }
+  .title-main { font-size:17px; font-weight:700; flex:1; }
+  .wdbox { display:flex; gap:10px; font-size:10px; align-items:center; }
+  .cb-label { display:flex; align-items:center; gap:3px; }
+  .cb-box { width:11px; height:11px; border:1px solid #333; display:inline-block; flex-shrink:0; }
+
+  /* META */
+  .meta-table { width:100%; border-collapse:collapse; margin-bottom:6px; }
+  .meta-table td { padding:1px 4px; font-size:10px; vertical-align:bottom; }
+  .meta-label { font-weight:700; white-space:nowrap; width:90px; }
+  .ul { border-bottom:1px solid #555; display:inline-block; vertical-align:bottom; }
+
+  /* LEGEND */
+  .legend-row { display:flex; font-size:9px; color:#333; border-top:1px solid #aaa; border-bottom:1px solid #aaa; padding:2px 0; margin-bottom:5px; }
+  .legend-cell { display:flex; align-items:center; gap:5px; }
+
+  /* Shapes for OK (square) and NOK (circle) */
+  .chk { width:9px; height:9px; background:#fff; border:1.5px solid #222; border-radius:50%; display:inline-block; flex-shrink:0; vertical-align:middle; }
+  .sqr { width:9px; height:9px; background:#fff; border:1.5px solid #222; border-radius:0; display:inline-block; flex-shrink:0; vertical-align:middle; }
+  .oo { display:inline-flex; gap:2px; align-items:center; flex-shrink:0; }
+
+  /* MAIN GRID */
+  .main-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 0; }
+  .col-left { padding-right:12px; border-right:1px solid #bbb; }
+  .col-right { padding-left:12px; }
+
+  /* ITEM ROW - everything on one line, wraps naturally */
+  .row {
+    display:flex;
+    align-items:baseline;
+    gap:3px;
+    margin-bottom:2px;
+    font-size:9.8px;
+    line-height:1.4;
+    flex-wrap:nowrap;
+  }
+
+  /* label column left */
+  .lc  { min-width:108px; font-weight:700; font-size:10px; flex-shrink:0; }
+  /* label column right */
+  .lcr { min-width:116px; font-weight:700; font-size:10px; flex-shrink:0; }
+
+  .n { min-width:18px; font-size:9.5px; color:#333; flex-shrink:0; }
+
+  /* text + inline fill area */
+  .t { font-size:9.8px; display:inline-flex; align-items:baseline; gap:3px; flex-wrap:wrap; flex:1; }
+
+  /* pencil icon */
+  .p::before { content:"✏"; font-size:9px; color:#555; flex-shrink:0; }
+
+  /* underline fill field */
+  .f { border-bottom:1px solid #555; display:inline-block; height:11px; vertical-align:bottom; }
+
+  .sec { margin-bottom:4px; }
+  .subrow { display:flex; gap:8px; align-items:center; font-size:9.5px; margin:1px 0 1px 0; }
+  .indent { padding-left:130px; }
+  .indentR { padding-left:140px; }
+
+  .ruled { border-bottom:1px solid #aaa; height:16px; margin-bottom:4px; }
+  .sig-block { display:flex; align-items:flex-end; gap:6px; font-size:10px; font-weight:700; }
+  .sig-block span { border-bottom:1px solid #555; flex:1; height:14px; display:inline-block; }
+
+  .sig-line{
+    height:42px !important;
+    display:flex !important;
+    align-items:flex-end;
+    justify-content:center;
+    overflow:hidden;
+  }
+  .sig-line img{
+    max-width:100%;
+    max-height:40px;
+    object-fit:contain;
+    display:none;
+  }
+  .sig-line img.has-signature{
+    display:block;
+  }
+
+  @media print { body{background:#fff;padding:0;} .page{box-shadow:none;} .toolbar{display:none!important;} .page{page-break-after:always;} .page:last-of-type{page-break-after:auto;} }
+
+  /* ── PAGE 2: Photo Documentation ─────────────────── */
+  .page-photo { display:none; }
+  .page-photo.visible { display:block; }
+  .page-photo .photo-title {
+    font-size:16px; font-weight:700; border-bottom:2px solid #000;
+    padding-bottom:4px; margin-bottom:10px; letter-spacing:0.5px;
+  }
+  .photo-entry {
+    border:1px solid #ccc; border-radius:4px; padding:8px 10px;
+    margin-bottom:10px; page-break-inside:avoid; break-inside:avoid;
+  }
+  .photo-entry-header { margin-bottom:6px; }
+  .photo-entry-header .pe-bereich {
+    font-weight:700; font-size:11px; color:#111;
+  }
+  .photo-entry-header .pe-punkt {
+    font-size:10px; color:#555; margin-left:8px;
+  }
+  .photo-entry-pruefpunkt {
+    font-size:10px; margin-bottom:3px; line-height:1.4;
+  }
+  .photo-entry-bemerkung {
+    font-size:9.5px; color:#333; font-style:italic;
+    margin-bottom:6px; line-height:1.4;
+  }
+  .photo-grid {
+    display:flex; flex-wrap:wrap; gap:8px;
+  }
+  .photo-grid img {
+    max-width:calc(50% - 4px); height:auto;
+    border:1px solid #bbb; border-radius:3px;
+    display:block;
+  }
+
+  /* filled state for OK (square) and NOK (circle) */
+  .sqr.ok  { background:#111; }
+  .chk.nok { background:#111; }
+
+  /* filled state for cb-box checkboxes */
+  .cb-box.checked { background:#111; }
+
+  /* Toolbar */
+  .toolbar {
+    width: 210mm;
+    margin: 0 auto 10px auto;
+    display: flex;
+    gap: 8px;
+  }
+  .toolbar button {
+    padding: 6px 13px;
+    border: 1px solid #888;
+    border-radius: 5px;
+    background: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .toolbar button:hover { background: #f0f0f0; }
+
+  body.pdf-mode {
+  display: block !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #ffffff !important;
+}
+
+body.pdf-mode .toolbar,
+body.pdf-mode .no-print {
+  display: none !important;
+}
+
+body.pdf-mode #rapportContent,
+body.pdf-mode #rapportPage {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.pdf-mode .page {
+  box-shadow: none !important;
+  margin: 0 !important;
+}
+
+</style>
+</head>
+<body>
+<div id="rapportContent">
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAZABkAAD/7QAsUGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAA8cAVoAAxslRxwCAAACAAIA/+ED/mh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8APD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNy4xLWMwMDAgNzkuZGFiYWNiYiwgMjAyMS8wNC8xNC0wMDozOTo0NCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyIgeG1wTU06T3JpZ2luYWxEb2N1bWVudElEPSJ1dWlkOjVEMjA4OTI0OTNCRkRCMTE5MTRBODU5MEQzMTUwOEM4IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjdENTQwRjY5MUY4RTExRUM4OUI2QzQxOUJEMkU1NzBCIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjdENTQwRjY4MUY4RTExRUM4OUI2QzQxOUJEMkU1NzBCIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIElsbHVzdHJhdG9yIDI1LjQgKE1hY2ludG9zaCkiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo2NGNkYzE1MC1lYTE5LTQ2NzUtYTIxMC00ZGE0M2M1OTJlNTkiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6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" style="height:42px; width:auto;" alt="Zentex Logo">
+    <div class="header-contact">
+      Hofmattstrasse 9, 5432 Neuenhof &nbsp;&nbsp; Tel: 056 416 20 30 &nbsp;&nbsp; Fax: 056 416 20 31 &nbsp;&nbsp; www.zentex.ch
+    </div>
+  </div>
+
+  <!-- TITLE -->
+  <div class="title-row">
+    <span class="title-checkliste">CHECKLISTE</span>
+    <span class="title-main">Instandhaltung für Sprinkleranlagen</span>
+    <div class="wdbox">
+      <label class="cb-label"><span class="cb-box" id="boxTypeNass"></span> nass</label>
+      <label class="cb-label"><span class="cb-box" id="boxTypeTrocken"></span> trocken</label>
+      <label class="cb-label"><span class="cb-box" id="boxTypeSpruehflut"></span> Sprühflut</label>
+    </div>
+  </div>
+
+  <!-- META -->
+  <table class="meta-table">
+    <tr>
+      <td class="meta-label">Servicemonteur:</td>
+      <td>Name/Vorname: <span class="ul" id="fldMonteurName" style="width:100%;min-width:210px;display:inline-block"></span></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="meta-label">Anlagebesitzer:</td>
+      <td>Firma &amp; SAZ Nr. : <span class="ul" id="fldCompanySaz" style="width:100%;min-width:175px;display:inline-block"></span></td>
+      <td style="white-space:nowrap; padding-left:8px">SAZ: <span class="ul" id="fldSaz" style="min-width:120px"></span></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>Ansprechperson: <span class="ul" id="fldContactPerson" style="width:100%;min-width:190px;display:inline-block"></span></td>
+      <td></td>
+    </tr>
+  </table>
+
+  <!-- LEGEND -->
+  <div class="legend-row">
+    <div class="legend-cell">nicht vorhandene Elemente streichen &nbsp; <span style="font-weight:700;font-size:9px;">OK</span> <span class="sqr"></span> &nbsp; <span style="font-weight:700;font-size:9px;">NOK</span> <span class="chk"></span> &nbsp; zutreffendes ausfüllen</div>
+    <div></div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-grid">
+
+    <!-- ===== LEFT COLUMN ===== -->
+    <div class="col-left">
+
+      <!-- Wasseranschluss -->
+      <div class="sec">
+        <div class="row"><span class="lc">Wasseranschluss:</span><span class="n">1</span><span class="oo"><span class="sqr" id="ok-1"></span><span class="chk" id="nok-1"></span></span><span class="t">Schieber auf Gängigkeit und Dichtheit geprüft.</span></div>
+        <div class="row"><span class="lc"></span><span class="n">2</span><span class="oo"><span class="sqr" id="ok-2"></span><span class="chk" id="nok-2"></span></span><span class="t">Schmutzfänger gereinigt,</span></div>
+        <div class="row"><span class="lc"></span><span class="n">3</span><span class="oo"><span class="sqr" id="ok-3"></span><span class="chk" id="nok-3"></span></span><span class="t">Manometer geprüft io.</span></div>
+        <div class="row"><span class="lc"></span><span class="n">4</span><span class="oo"><span class="sqr" id="ok-4"></span><span class="chk" id="nok-4"></span></span><span class="t">Rückschlagklappe gereinigt, Dichtheit kontrolliert io.</span></div>
+        <div class="row"><span class="lc"></span><span class="n">5</span><span class="oo"><span class="sqr" id="ok-5"></span><span class="chk" id="nok-5"></span></span><span class="t">Trinkwasserschutzventil gereinigt, Dichtheit und Funktion kontrolliert io.</span></div>
+      </div>
+
+      <!-- Alarmventile -->
+      <div class="sec">
+        <div class="row"><span class="lc">Alarmventile:</span><span class="n">10</span><span class="oo"><span class="sqr" id="ok-10"></span><span class="chk" id="nok-10"></span></span><span class="t">Deckeldichtung ersetzt io.</span></div>
+        <div class="row"><span class="lc"></span><span class="n">11</span><span class="oo"><span class="sqr" id="ok-11"></span><span class="chk" id="nok-11"></span></span><span class="t">Klappendichtung ersetzt io.</span></div>
+        <div class="row"><span class="lc"></span><span class="n">12</span><span class="oo"><span class="sqr" id="ok-12"></span><span class="chk" id="nok-12"></span></span><span class="t">Retard-Chamber kontrolliert io.</span></div>
+        <div class="row"><span class="lc"></span><span class="n">13</span><span class="oo"><span class="sqr" id="ok-13"></span><span class="chk" id="nok-13"></span></span><span class="t">Schnellöffner kontrolliert io.</span></div>
+        <div class="row"><span class="lc"></span><span class="n">14</span><span class="oo"><span class="sqr" id="ok-14"></span><span class="chk" id="nok-14"></span></span><span class="t">Schnellentlüfter kontrolliert io.</span></div>
+        <div class="row"><span class="lc"></span><span class="n">15</span><span class="oo"><span class="sqr" id="ok-15"></span><span class="chk" id="nok-15"></span></span><span class="t">Anlage sauber entleert io.</span></div>
+        <div class="row"><span class="lc"></span><span class="n">16</span><span class="oo"><span class="sqr" id="ok-16"></span><span class="chk" id="nok-16"></span></span><span class="t">Dichtheit TAV io.</span></div>
+      </div>
+
+      <!-- Prüfleitung -->
+      <div class="sec">
+        <div class="row"><span class="lc">Prüfleitung:</span><span class="n">20</span><span class="oo"><span class="sqr" id="ok-20"></span><span class="chk" id="nok-20"></span></span><span class="t">Dichtheit geprüft und Rohrleitung entleert io.</span></div>
+      </div>
+
+      <!-- Alarmglocke -->
+      <div class="sec">
+        <div class="row"><span class="lc">Alarmglocke:</span><span class="n">30</span><span class="oo"><span class="sqr" id="ok-30"></span><span class="chk" id="nok-30"></span></span><span class="t">Filter und Düse io.</span></div>
+      </div>
+
+      <!-- Rohrleitungsnetz -->
+      <div class="sec">
+        <div class="row"><span class="lc">Rohrleitungsnetz:</span><span class="n">40</span><span class="oo"><span class="sqr" id="ok-40"></span><span class="chk" id="nok-40"></span></span><span class="t">gem. Sichtkontrolle io.</span></div>
+      </div>
+
+      <!-- Druckluft-Kompressor -->
+      <div class="sec">
+        <div class="row"><span class="lc">Druckluft-<br>Kompressor:</span><span class="n">50</span><span class="oo"><span class="sqr" id="ok-50"></span><span class="chk" id="nok-50"></span></span><span class="t">Druckbehälter entleert io.</span></div>
+        <div class="row"><span class="lc"></span><span class="n">51</span><span class="oo"><span class="sqr" id="ok-51"></span><span class="chk" id="nok-51"></span></span><span class="t">Oelstand kontrolliert io.</span></div>
+      </div>
+
+      <!-- Druckschalter Kompressor -->
+      <div class="sec">
+        <div class="row"><span class="lc">Druckschalter<br>Kompressor:</span><span class="n">52</span><span class="oo"><span class="sqr" id="ok-52"></span><span class="chk" id="nok-52"></span></span><span class="t">Ein + Ausschaltdruck io.</span></div>
+        <!-- inline input on same line as label -->
+        <div class="row indent"><span class="p"></span><span class="t">p<sub>ein</sub>: <span class="f" id="fldPein" style="min-width:38px"></span> bar &nbsp;;&nbsp; p<sub>aus</sub>: <span class="f" id="fldPaus" style="min-width:38px"></span> bar</span></div>
+      </div>
+
+      <!-- Schwundmelder -->
+      <div class="sec">
+        <div class="row"><span class="lc">Schwundmelder:</span><span class="n">53</span><span class="oo"><span class="sqr" id="ok-53"></span><span class="chk" id="nok-53"></span></span><span class="t">Ein + Ausschaltdruck io.</span></div>
+        <div class="row indent"><span class="p"></span><span class="t">pStörung: <span class="f" id="fldPStoerung" style="min-width:90px"></span> bar</span></div>
+      </div>
+
+      <!-- BMZ / Telealarmgerät -->
+      <div class="sec">
+        <div class="row"><span class="lc">BMZ / Telealarmgerät:</span><span class="p"></span><span class="t">Wartung durch:** <span class="f" id="fldWartungDurchLinks" style="min-width:75px"></span></span></div>
+        <div class="subrow" style="padding-left:130px">
+          <label class="cb-label"><span class="cb-box" id="chkDrittfirmaLinks"></span> Drittfirma**</label>
+          <label class="cb-label"><span class="cb-box" id="chkZentexLinks"></span> ZENTEX</label>
+        </div>
+      </div>
+
+      <!-- Akku / Prüfbox / Schieberüberwachung / Durchflussmelder -->
+      <div class="sec">
+        <div class="row"><span class="lc">Akku:</span><span class="n">61</span><span class="oo"><span class="sqr" id="ok-61"></span><span class="chk" id="nok-61"></span></span><span class="t">Akku überprüft io.</span></div>
+        <div class="row"><span class="lc">Prüfbox:</span><span class="n">62</span><span class="oo"><span class="sqr" id="ok-62"></span><span class="chk" id="nok-62"></span></span><span class="t">Sprinklerprüfbox io.</span></div>
+        <div class="row"><span class="lc">Schieberüberwachung:</span><span class="n">63</span><span class="oo"><span class="sqr" id="ok-63"></span><span class="chk" id="nok-63"></span></span><span class="t">El. Schieberüberwachung io.</span></div>
+        <div class="row"><span class="lc">Durchflussmelder:</span><span class="n">64</span><span class="oo"><span class="sqr" id="ok-64"></span><span class="chk" id="nok-64"></span></span><span class="t">Durchflussmelder io.</span></div>
+      </div>
+
+      <!-- Bemerkungen -->
+      <div class="row" style="margin-top:6px">
+        <span style="font-weight:700; font-size:10px; margin-right:6px">Bemerkungen :</span>
+        <label class="cb-label"><span class="cb-box" id="chkSeparateBeilage"></span> gem. separater Beilage</label>
+      </div>
+
+    </div><!-- end left -->
+
+    <!-- ===== RIGHT COLUMN ===== -->
+    <div class="col-right">
+
+      <!-- Schaumzumischung -->
+      <div class="sec">
+        <div class="row"><span class="lcr">Schaumzumischung:</span><span class="n">70</span><span class="oo"><span class="sqr" id="ok-70"></span><span class="chk" id="nok-70"></span></span><span class="t">Füllstand Schaummitteltank io.</span></div>
+        <!-- Blasentank / Normaltank inline -->
+        <div class="row indentR"><span class="p"></span><span class="t"><label class="cb-label"><span class="cb-box" id="chkBlasentank"></span> Blasentank</label>&nbsp;<label class="cb-label"><span class="cb-box" id="chkNormaltank"></span> Normaltank</label></span></div>
+        <!-- ca. ... Liter inline -->
+        <div class="row indentR"><span class="p"></span><span class="t">ca. <span class="f" id="fldSchaumLiter" style="min-width:90px"></span> Liter</span></div>
+        <div class="row"><span class="lcr"></span><span class="n">71</span><span class="oo"><span class="sqr" id="ok-71"></span><span class="chk" id="nok-71"></span></span><span class="t">Schaummittelprobe entnommen</span></div>
+        <div class="row indentR" style="font-size:9.5px">Füllung Rohrleitungsnetz:</div>
+        <div class="subrow" style="padding-left:140px">
+          <label class="cb-label"><span class="cb-box" id="chkWasser"></span> Wasser</label>
+          <label class="cb-label"><span class="cb-box" id="chkPremix"></span> Premix</label>
+        </div>
+      </div>
+
+      <!-- Zumischeinrichtung -->
+      <div class="sec">
+        <div class="row"><span class="lcr">Zumischeinrichtung:</span><span class="n">72</span><span class="oo"><span class="sqr" id="ok-72"></span><span class="chk" id="nok-72"></span></span><span class="t">Funktionen kontrolliert io.</span></div>
+      </div>
+
+      <!-- Frostschutzeinrichtung -->
+      <div class="sec">
+        <div class="row"><span class="lcr">Frostschutzeinrichtung:</span><span class="n">80</span><span class="oo"><span class="sqr" id="ok-80"></span><span class="chk" id="nok-80"></span></span><span class="t">Frostschutz kontrolliert io.</span></div>
+        <!-- min. -  ...°C inline -->
+        <div class="row indentR"><span class="p"></span><span class="t">min. - <span class="f" id="fldMinTemp" style="min-width:80px"></span> °C</span></div>
+        <div class="row"><span class="lcr"></span><span class="n">81</span><span class="oo"><span class="sqr" id="ok-81"></span><span class="chk" id="nok-81"></span></span><span class="t">Blasenspeicher io.</span></div>
+        <!-- Fülldruck inline -->
+        <div class="row indentR"><span class="p"></span><span class="t">Fülldruck: <span class="f" id="fldFuellDruck1" style="min-width:60px"></span> bar</span></div>
+        <div class="row indentR"><span class="p"></span><span class="t">Fülldruck: <span class="f" id="fldFuellDruck2" style="min-width:60px"></span> bar</span></div>
+        <div class="row indentR"><span class="p"></span><span class="t">Fülldruck: <span class="f" id="fldFuellDruck3" style="min-width:60px"></span> bar</span></div>
+        <div class="row"><span class="lcr"></span><span class="n">82</span><span class="oo"><span class="sqr" id="ok-82"></span><span class="chk" id="nok-82"></span></span><span class="t">Füll + Entleervorrichtung io.</span></div>
+        <div class="row"><span class="lcr"></span><span class="n">83</span><span class="oo"><span class="sqr" id="ok-83"></span><span class="chk" id="nok-83"></span></span><span class="t">Frostschutztrenner io.</span></div>
+      </div>
+
+      <!-- Diesel- und E-pumpen -->
+      <div class="sec">
+        <div class="row"><span class="lcr">Diesel- und E-pumpen:</span><span class="n">90</span><span class="oo"><span class="sqr" id="ok-90"></span><span class="chk" id="nok-90"></span></span><span class="t">Funktionen und Leistungsdaten io. gem. sep. Wartungsrapport vom:</span></div>
+        <!-- Datum inline -->
+        <div class="row indentR"><span class="p"></span><span class="t">Datum: <span class="f" id="fldPumpenDatum" style="min-width:95px"></span></span></div>
+        <!-- Wartung durch inline -->
+        <div class="row indentR" style="margin-top:2px"><span class="t">Wartung durch: ** <span class="f" id="fldWartungDurchRechts" style="min-width:70px"></span></span></div>
+        <div class="subrow" style="padding-left:140px">
+          <label class="cb-label"><span class="cb-box" id="chkDrittfirmaRechts"></span> Drittfirma**</label>
+          <label class="cb-label"><span class="cb-box" id="chkZentexRechts"></span> ZENTEX</label>
+        </div>
+      </div>
+
+      <!-- Schlusskontrolle -->
+      <div class="sec" style="margin-top:4px">
+        <div class="row"><span class="lcr">Schlusskontrolle***:</span><span class="n">100</span><span class="oo"><span class="sqr" id="ok-100"></span><span class="chk" id="nok-100"></span></span><span class="t">durchgeführt gem. SP-Kontrollbuch</span></div>
+      </div>
+
+      <!-- Alarmübermittlung ext. -->
+      <div class="sec">
+        <div class="row"><span class="lcr">Alarmübermittlung ext.:</span><span class="n">101</span><span class="oo"><span class="sqr" id="ok-101"></span><span class="chk" id="nok-101"></span></span><span class="t">Feueralarm io.</span></div>
+        <div class="row"><span class="lcr"></span><span class="n">102</span><span class="oo"><span class="sqr" id="ok-102"></span><span class="chk" id="nok-102"></span></span><span class="t">Störung SPA io.</span></div>
+      </div>
+
+      <div style="margin-top:8px; font-size:9px; color:#444; text-align:right;">
+        <span class="p"></span> auszufüllen durch Servicemonteur
+      </div>
+
+    </div><!-- end right -->
+  </div><!-- end main-grid -->
+  <div style="border-top:1px solid #888; margin-top:4px;"></div>
+
+  <!-- NOTES / BEMERKUNGEN -->
+  <div style="margin-top:6px; border-top:1px solid #aaa; padding-top:4px">
+    <div id="remarksText" style="font-size:9.5px; min-height:80px; line-height:1.6; white-space:pre-wrap;"></div>
+    <div class="ruled"></div>
+  </div>
+
+  <!-- COMMISSION -->
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px; border-top:1px solid #aaa; padding-top:5px; font-size:11px;">
+    <strong>*** Die Sprinkleranlage wurde vorschriftsgemäss in Betrieb genommen.</strong>
+    <span style="white-space:nowrap; flex-shrink:0; padding-left:12px">Datum : <span class="ul" id="fldDateBottom" style="min-width:130px; display:inline-block"></span></span>
+  </div>
+
+  <!-- spacer lines before signatures -->
+  <div style="height:28px"></div>
+  <div style="height:28px"></div>
+
+  <!-- SIGNATURES -->
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:6px">
+    <div class="sig-block">
+      Unterschrift Servicemonteur:
+      <span class="sig-line"><img id="sigImgMonteur" alt="Unterschrift Monteur"></span>
+    </div>
+    <div class="sig-block">
+      Unterschrift Kunde:
+      <span class="sig-line"><img id="sigImgKunde" alt="Unterschrift Kunde"></span>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2: Photo Documentation (only shown when photos exist) -->
+<div class="page page-photo" id="photoPage">
+  <div class="header">
+    <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAZABkAAD/7QAsUGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAA8cAVoAAxslRxwCAAACAAIA/+ED/mh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8APD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNy4xLWMwMDAgNzkuZGFiYWNiYiwgMjAyMS8wNC8xNC0wMDozOTo0NCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyIgeG1wTU06T3JpZ2luYWxEb2N1bWVudElEPSJ1dWlkOjVEMjA4OTI0OTNCRkRCMTE5MTRBODU5MEQzMTUwOEM4IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjdENTQwRjY5MUY4RTExRUM4OUI2QzQxOUJEMkU1NzBCIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjdENTQwRjY4MUY4RTExRUM4OUI2QzQxOUJEMkU1NzBCIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIElsbHVzdHJhdG9yIDI1LjQgKE1hY2ludG9zaCkiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo2NGNkYzE1MC1lYTE5LTQ2NzUtYTIxMC00ZGE0M2M1OTJlNTkiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6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" style="height:42px; width:auto;" alt="Zentex Logo">
+    <div class="header-contact">
+      Hofmattstrasse 9, 5432 Neuenhof &nbsp;&nbsp; Tel: 056 416 20 30 &nbsp;&nbsp; Fax: 056 416 20 31 &nbsp;&nbsp; www.zentex.ch
+    </div>
+  </div>
+  <div class="photo-title">Anmerkungen / Fotodokumentation</div>
+  <div id="photoEntries"></div>
+</div>
+</div><!-- /rapportContent -->
+
+<div class="toolbar" style="margin-top:10px; margin-bottom:0;">
+  <button type="button" id="btnFinalSubmit" onclick="finalSubmitCheckliste()"
+    style="background:#1a7f37;color:#fff;border-color:#15652c;font-weight:bold;">
+    ✓ Endgültig abschliessen
+  </button>
+</div>
+  <script>
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function setText(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val ?? "";
+    }
+
+    function setOkNok(no, answer) {
+      const a = String(answer || "").trim().toUpperCase();
+      const sqr = document.getElementById("ok-"  + no);
+      const chk = document.getElementById("nok-" + no);
+      if (sqr) sqr.classList.toggle("ok",  a === "OK");
+      if (chk) chk.classList.toggle("nok", a === "NOK" || a === "NICHT OK" || a === "NICHTOK");
+    }
+
+    function setCbBox(id, active) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("checked", !!active);
+    }
+
+    function formatDate(v) {
+      if (!v) return "";
+      const d = new Date(v);
+      if (isNaN(d)) return String(v);
+      return String(d.getDate()).padStart(2,"0") + "." +
+             String(d.getMonth()+1).padStart(2,"0") + "." +
+             d.getFullYear();
+    }
+
+    function boolFrom(val, needles) {
+      const t = String(val||"").toLowerCase();
+      return needles.some(n => t.includes(n));
+    }
+
+    function parseMap(items) {
+      const m = {};
+      for (const it of (items||[])) {
+        const n = Number(it.ItemOrder ?? it.Nr);
+        if (!isNaN(n)) m[n] = it;
+      }
+      return m;
+    }
+
+    // ── Main render ───────────────────────────────────────────────────────────
+    function renderReport(data) {
+      const job  = data?.job  || {};
+      const imap = parseMap(data?.items);
+
+      // Meta
+      setText("fldMonteurName",   job.MonteurName || "");
+      setText("fldCompanySaz",    job.KundeFirma || "");
+      setText("fldSaz",           job.SAZNr || "");
+      setText("fldContactPerson", job.Ansprechpartner || "");
+      setText("fldDateBottom",    formatDate(job.Datum));
+      setText("remarksText",      job.Bemerkungen || "");
+
+      // Anlagetyp
+      const typ = String(job.Typ||"").toLowerCase();
+      setCbBox("boxTypeNass",       typ === "nass");
+      setCbBox("boxTypeTrocken",    typ === "trocken");
+      setCbBox("boxTypeSpruehflut", typ === "spruehflut");
+
+      // All checklist items OK/NOK
+      [1,2,3,4,5,10,11,12,13,14,15,16,20,30,40,50,51,52,53,61,62,63,64,70,71,72,80,81,82,83,90,100,101,102]
+        .forEach(n => setOkNok(n, imap[n]?.Antwort || ""));
+
+      // Numeric fields
+      const i52 = imap[52], i53 = imap[53];
+      const i70 = imap[70], i80 = imap[80];
+      const i81 = imap[81], i82 = imap[82], i83 = imap[83], i90 = imap[90];
+
+      let pein = job.Pein || "", paus = job.Paus || "";
+      if (!pein && !paus && i52?.WertNotiz) {
+        const t = String(i52.WertNotiz);
+        const m1 = t.match(/pein\s*([0-9.,]+)/i);
+        const m2 = t.match(/paus\s*([0-9.,]+)/i);
+        if (m1) pein = m1[1];
+        if (m2) paus = m2[1];
+      }
+      setText("fldPein", pein);
+      setText("fldPaus", paus);
+      setText("fldPStoerung",       job.PStoerung      || i53?.WertNotiz || "");
+      setText("fldWartungDurchLinks",  job.WartungDurchLinks  || "");
+      setText("fldWartungDurchRechts", job.WartungDurchRechts || "");
+      setText("fldSchaumLiter",     job.SchaumLiter    || i70?.WertNotiz || "");
+      setText("fldMinTemp",         job.MinTemp        || i80?.WertNotiz || "");
+      setText("fldFuellDruck1",     job.FuellDruck1    || i81?.WertNotiz || "");
+      setText("fldFuellDruck2",     job.FuellDruck2    || i82?.WertNotiz || "");
+      setText("fldFuellDruck3",     job.FuellDruck3    || i83?.WertNotiz || "");
+      setText("fldPumpenDatum",     job.PumpenDatum    || i90?.WertNotiz || "");
+
+      // Checkboxes
+      const schaumTxt = [i70?.WertNotiz, i70?.Bemerkung, i70?.WertNotiz, job.SchaumTyp, job.RohrnetzFuellung].filter(Boolean).join(" ");
+      setCbBox("chkBlasentank",        boolFrom(schaumTxt, ["blasentank"]));
+      setCbBox("chkNormaltank",        boolFrom(schaumTxt, ["normaltank"]));
+      setCbBox("chkWasser",            boolFrom(schaumTxt, ["wasser"]));
+      setCbBox("chkPremix",            boolFrom(schaumTxt, ["premix"]));
+      setCbBox("chkDrittfirmaLinks",   !!job.DrittfirmaLinks);
+      setCbBox("chkZentexLinks",       !!job.ZentexLinks);
+      setCbBox("chkDrittfirmaRechts",  !!job.DrittfirmaRechts);
+      setCbBox("chkZentexRechts",      !!job.ZentexRechts);
+      setCbBox("chkSeparateBeilage",   !!job.SeparateBeilage);
+
+      // Render page 2 (photo documentation) – only if photos exist
+      renderPhotoPage(data);
+    }
+
+    // ── Photo Page (Page 2) ──────────────────────────────────────────────────
+    function renderPhotoPage(data) {
+      const photoPage = document.getElementById("photoPage");
+      const photoEntries = document.getElementById("photoEntries");
+      if (!photoPage || !photoEntries) return;
+
+      photoEntries.innerHTML = "";
+      photoPage.classList.remove("visible");
+
+      // Build flat items list with photo data
+      const items = data?.items || {};
+      const photoItems = [];
+
+      // items can be object keyed by nr or array
+      const entries = Array.isArray(items) ? items : Object.entries(items).map(([k, v]) => {
+        v._nr = Number(k);
+        return v;
+      });
+
+      for (const it of entries) {
+        const nr = it.ItemOrder ?? it._nr ?? it.Nr;
+        const fotos = it.Fotos || it.photos || [];
+        if (Array.isArray(fotos) && fotos.length > 0) {
+          photoItems.push({
+            ItemOrder: Number(nr),
+            Bereich: it.Bereich || it.bereich || "",
+            Pruefpunkt: it.Pruefpunkt || it.text || "",
+            Antwort: it.Antwort || it.status || "",
+            Bemerkung: it.Bemerkung || it.note || "",
+            Fotos: fotos
+          });
+        }
+      }
+
+      if (photoItems.length === 0) return;
+
+      // Sort by ItemOrder
+      photoItems.sort((a, b) => a.ItemOrder - b.ItemOrder);
+
+      photoPage.classList.add("visible");
+
+      for (const item of photoItems) {
+        const entry = document.createElement("div");
+        entry.className = "photo-entry";
+
+        let html = '<div class="photo-entry-header">';
+        html += '<span class="pe-bereich">' + esc(item.Bereich) + '</span>';
+        html += '<span class="pe-punkt">Punkt ' + item.ItemOrder + '</span>';
+        html += '</div>';
+        html += '<div class="photo-entry-pruefpunkt">' + esc(item.Pruefpunkt) + '</div>';
+        if (item.Bemerkung) {
+          html += '<div class="photo-entry-bemerkung">Bemerkung: ' + esc(item.Bemerkung) + '</div>';
+        }
+        html += '<div class="photo-grid">';
+        for (let i = 0; i < item.Fotos.length; i++) {
+          html += '<img src="' + item.Fotos[i] + '" alt="Foto ' + (i + 1) + '">';
+        }
+        html += '</div>';
+
+        entry.innerHTML = html;
+        photoEntries.appendChild(entry);
+      }
+    }
+
+    function esc(s) {
+      const d = document.createElement("div");
+      d.textContent = s || "";
+      return d.innerHTML;
+    }
+
+    // ── Load from localStorage (checkliste data) ──────────────────────────────
+    function loadFromLocalStorage() {
+      const QUEUE_KEY = "zentex_sync_queue_v1";
+      const KEY_PREFIX = "zentex_chk_v4_item_";
+      const KEY_META = "zentex_chk_meta_v4";
+      const KEY_FINAL_NOTE = "zentex_chk_final_note_v4";
+
+      function sp(j, fb) { try { return JSON.parse(j); } catch(e) { return fb; } }
+
+      // Try URL param first
+      const urlId = new URLSearchParams(window.location.search).get("id");
+
+      // Try sync queue
+      let found = null;
+      const queue = sp(localStorage.getItem(QUEUE_KEY) || "[]", []);
+      for (const entry of queue) {
+        if (entry?.type !== "checkliste") continue;
+        const eid = String(entry?.payload?.meta?.jobId || entry?.payload?.jobId || "").trim();
+        if (urlId && eid === urlId) { found = entry.payload; break; }
+        if (!urlId && entry?.payload) { found = entry.payload; }
+      }
+
+      // Build report data
+      const meta = found?.meta || sp(localStorage.getItem(KEY_META) || "{}", {});
+      const finalNote = found?.finalNote || localStorage.getItem(KEY_FINAL_NOTE) || "";
+
+      // Known item numbers
+      const allNrs = [1,2,3,4,5,10,11,12,13,14,15,16,20,30,40,50,51,52,53,61,62,63,64,70,71,72,80,81,82,83,90,100,101,102];
+
+      const itemsArray = [];
+      const itemsObj = found?.items || {};
+
+      for (const nr of allNrs) {
+        let raw = itemsObj[nr];
+        if (!raw) {
+          // 🔧 FIXED – Job-spezifischer Key zuerst, dann Legacy-Fallback
+          const jobSpecificKey = urlId ? (KEY_PREFIX + urlId + "_" + nr) : null;
+          const jobLs = jobSpecificKey ? localStorage.getItem(jobSpecificKey) : null;
+          const ls = jobLs || localStorage.getItem(KEY_PREFIX + nr);
+          if (ls) raw = sp(ls, null);
+        }
+        if (!raw) continue;
+
+        const status = (raw.status || "").toUpperCase();
+        const note = raw.note || "";
+        const photos = Array.isArray(raw.photos) ? raw.photos : (raw.photo ? [raw.photo] : []);
+
+        const it = {
+          ItemOrder: nr,
+          Antwort: status,
+          Bemerkung: note,
+          WertNotiz: note,
+          Bereich: raw.bereich || "",
+          Pruefpunkt: raw.text || "",
+          Fotos: photos
+        };
+        itemsArray.push(it);
+      }
+
+      // Parse special fields
+      function findItem(n) { return itemsArray.find(x => x.ItemOrder === n); }
+      const i52 = findItem(52), i53 = findItem(53);
+      const i70 = findItem(70), i80 = findItem(80);
+      const i81 = findItem(81), i82 = findItem(82), i83 = findItem(83), i90 = findItem(90);
+
+      let pein = "", paus = "";
+      if (i52 && i52.WertNotiz) {
+        const t = String(i52.WertNotiz);
+        const m1 = t.match(/(?:ein|pein)[:\s]*([0-9.,]+)/i);
+        const m2 = t.match(/(?:aus|paus)[:\s]*([0-9.,]+)/i);
+        if (m1) pein = m1[1];
+        if (m2) paus = m2[1];
+      }
+
+      const reportData = {
+        job: {
+          MonteurName: meta.servicemonteur || meta.MonteurName || "",
+          KundeFirma: meta.firma || meta.objekt || meta.kunde || "",
+          SAZNr: meta.saznr || "",
+          Ansprechpartner: meta.ansprechperson || "",
+          Datum: meta.serviceDatum || meta.datum || "",
+          Typ: meta.anlageart || "",
+          Bemerkungen: finalNote,
+          Pein: pein,
+          Paus: paus,
+          PStoerung: i53?.WertNotiz || "",
+          SchaumLiter: i70?.WertNotiz || "",
+          MinTemp: i80?.WertNotiz || "",
+          FuellDruck1: i81?.WertNotiz || "",
+          FuellDruck2: i82?.WertNotiz || "",
+          FuellDruck3: i83?.WertNotiz || "",
+          PumpenDatum: i90?.WertNotiz || "",
+          ZentexLinks: true,
+          ZentexRechts: true
+        },
+        items: itemsArray
+      };
+
+      renderReport(reportData);
+      window.currentReportData = reportData;
+    }
+
+    // ── Demo data ─────────────────────────────────────────────────────────────
+    function loadDemoData() {
+      const demo = {
+        job: {
+          MonteurName: "Michal Jancovic",
+          KundeFirma: "Beispiel AG", SAZNr: "7781",
+          Ansprechpartner: "Max Muster",
+          Datum: "2026-03-10", Typ: "nass",
+          Bemerkungen: "Rückschlagklappe: Dichtung leicht beschädigt – Ersatz empfohlen.\nManometer Pos. 3: Wert 8.4 bar, io.",
+          SchaumLiter: "180", MinTemp: "-12",
+          ZentexLinks: true, ZentexRechts: true
+        },
+        items: [
+          {ItemOrder:1,  Antwort:"OK"},  {ItemOrder:2,  Antwort:"OK"},
+          {ItemOrder:3,  Antwort:"OK",  WertNotiz:"8.4 bar"},
+          {ItemOrder:4,  Antwort:"NOK", Bemerkung:"Dichtung beschädigt"},
+          {ItemOrder:5,  Antwort:"OK"},
+          {ItemOrder:10, Antwort:"OK"},  {ItemOrder:11, Antwort:"OK"},
+          {ItemOrder:12, Antwort:"OK"},  {ItemOrder:13, Antwort:"OK"},
+          {ItemOrder:14, Antwort:"OK"},  {ItemOrder:15, Antwort:"OK"},
+          {ItemOrder:16, Antwort:"OK"},  {ItemOrder:20, Antwort:"OK"},
+          {ItemOrder:30, Antwort:"OK"},  {ItemOrder:40, Antwort:"OK"},
+          {ItemOrder:50, Antwort:"OK"},  {ItemOrder:51, Antwort:"OK"},
+          {ItemOrder:52, Antwort:"OK",  WertNotiz:"pein 5.2 / paus 6.4"},
+          {ItemOrder:53, Antwort:"OK",  WertNotiz:"4.8"},
+          {ItemOrder:61, Antwort:"OK"},  {ItemOrder:62, Antwort:"OK"},
+          {ItemOrder:63, Antwort:"OK"},  {ItemOrder:64, Antwort:"OK"},
+          {ItemOrder:70, Antwort:"OK",  Bemerkung:"Normaltank", WertNotiz:"180"},
+          {ItemOrder:71, Antwort:"OK",  WertNotiz:"Premix"},
+          {ItemOrder:72, Antwort:"OK"},
+          {ItemOrder:80, Antwort:"OK",  WertNotiz:"-12"},
+          {ItemOrder:81, Antwort:"OK",  WertNotiz:"3.2"},
+          {ItemOrder:82, Antwort:"OK"},  {ItemOrder:83, Antwort:"OK"},
+          {ItemOrder:90, Antwort:"OK"},
+          {ItemOrder:100,Antwort:"OK"},  {ItemOrder:101,Antwort:"OK"},
+          {ItemOrder:102,Antwort:"OK"}
+        ]
+      };
+      renderReport(demo);
+      window.currentReportData = demo;
+    }
+
+    function clearData() {
+      renderReport({});
+      window.currentReportData = null;
+      const pp = document.getElementById("photoPage");
+      if (pp) { pp.classList.remove("visible"); document.getElementById("photoEntries").innerHTML = ""; }
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       PDF-Erzeugung (html2pdf.js)
+       ══════════════════════════════════════════════════════════════════ */
+
+    function _buildChecklisteFileName(){
+      var urlId = new URLSearchParams(window.location.search).get("id");
+      var allJobs = [];
+      try{ allJobs = JSON.parse(localStorage.getItem("zentex_offline_jobs_v1") || "[]"); }catch(e){}
+      var job = urlId ? allJobs.find(function(x){ return x && x.id === urlId; }) : null;
+      var meta = job || {};
+      var saz = (meta.saznr || "ohne-nr").replace(/[^a-zA-Z0-9\-_]/g, "_");
+      var firma = (meta.firma || meta.objekt || "").replace(/[^a-zA-Z0-9äöüÄÖÜ\-_ ]/g, "").trim().replace(/\s+/g, "_");
+      var datum = new Date().toISOString().slice(0,10).replace(/-/g,"");
+      // 🔧 FIX 5 – jobId im Dateinamen für globale Eindeutigkeit
+      var safeJobId = (urlId || "unbekannt").replace(/[^a-zA-Z0-9\-_]/g, "_");
+      var parts = ["Checkliste", saz];
+      if(firma) parts.push(firma);
+      parts.push(datum);
+      parts.push(safeJobId);
+      return parts.join("_") + ".pdf";
+    }
+
+    async function generateChecklistePdfBlob(){
+  var element = document.getElementById("rapportContent");
+  if(!element) throw new Error("Element #rapportContent nicht gefunden.");
+  if(typeof html2pdf === "undefined") throw new Error("html2pdf.js nicht geladen. Bitte Internetverbindung prüfen.");
+
+  var imgs = element.querySelectorAll("img");
+  var IMG_WARN  = 20;
+  var IMG_LIMIT = 50;
+
+  if(imgs.length > IMG_LIMIT){
+    throw new Error(
+      "Zu viele Bilder im Rapport (" + imgs.length + " Bilder). " +
+      "Bitte Fotodokumentation auf maximal " + IMG_LIMIT + " Bilder reduzieren."
+    );
+  }
+  if(imgs.length > IMG_WARN){
+    console.warn("generateChecklistePdfBlob: Viele Bilder (" + imgs.length + "). PDF-Erzeugung kann länger dauern.");
+  }
+
+  imgs.forEach(function(img){
+    if(img.complete && img.naturalWidth === 0 && img.src && !img.src.startsWith("data:")){
+      console.warn("Bild konnte nicht geladen werden:", img.src.substring(0, 80));
+    }
+  });
+
+  var fileName = _buildChecklisteFileName();
+
+  document.body.classList.add("pdf-mode");
+
+  var opt = {
+    margin: 0,
+    filename: fileName,
+    image: { type: "jpeg", quality: 0.92 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      imageTimeout: 15000,
+      letterRendering: true,
+      backgroundColor: "#ffffff",
+      scrollX: 0,
+      scrollY: 0
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait"
+    },
+    pagebreak: {
+      mode: ["css", "legacy"],
+      before: ".page-photo.visible"
+    }
+  };
+
+  try{
+    var blob = await html2pdf().set(opt).from(element).outputPdf("blob");
+
+    if(!blob || blob.size === 0){
+      throw new Error("PDF-Erzeugung hat leeres Dokument erzeugt. Bitte Drucken als Alternative verwenden.");
+    }
+
+    return { blob: blob, fileName: fileName };
+  }catch(pdfErr){
+    throw new Error(
+      "PDF-Erzeugung fehlgeschlagen: " + (pdfErr && pdfErr.message || pdfErr) +
+      ". Bitte Drucken als Alternative verwenden."
+    );
+  }finally{
+    document.body.classList.remove("pdf-mode");
+  }
+}
+
+    function druckenAlsPDF(){
+      if(typeof html2pdf === "undefined"){ window.print(); return; }
+      var btn = (typeof event !== "undefined" && event && event.target) ? event.target : null;
+      var oldText = btn ? btn.textContent : "";
+      if(btn){ btn.textContent = "PDF wird erzeugt…"; btn.disabled = true; }
+      generateChecklistePdfBlob().then(function(result){
+        var url = URL.createObjectURL(result.blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = result.fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+        if(btn){ btn.textContent = oldText; btn.disabled = false; }
+      }).catch(function(err){
+        console.error("PDF-Erzeugung fehlgeschlagen:", err);
+        if(btn){ btn.textContent = oldText; btn.disabled = false; }
+        alert((err && err.message) ? err.message : "PDF-Erzeugung fehlgeschlagen. Fallback: Druckdialog");
+        window.print();
+      });
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       FINALER SUBMIT: Checkliste → SharePoint / Queue
+       ══════════════════════════════════════════════════════════════════ */
+    const JOBS_KEY_CR       = "zentex_offline_jobs_v1";
+    const CLOSE_QUEUE_KEY   = "zentex_close_queue_v1";
+    const KEY_META_CR       = "zentex_chk_meta_v4";
+    const KEY_FINAL_NOTE_CR = "zentex_chk_final_note_v4";
+    let _crSubmitting = false;
+
+    function crGetJobs(){
+      try { return JSON.parse(localStorage.getItem(JOBS_KEY_CR) || "[]"); }
+      catch(e){ return []; }
+    }
+    function crSaveJobs(all){
+      const copy = Array.isArray(all) ? all.slice() : [];
+      copy.sort(function(a,b){ return (b.updatedAt||0) - (a.updatedAt||0); });
+      localStorage.setItem(JOBS_KEY_CR, JSON.stringify(copy.slice(0, 50)));
+    }
+    function crUpdateJob(id, patch){
+      var all = crGetJobs();
+      var idx = all.findIndex(function(x){ return x && x.id === id; });
+      if (idx < 0) return;
+      Object.assign(all[idx], patch, { updatedAt: Date.now() });
+      crSaveJobs(all);
+    }
+    function crFindClosePayload(jid){
+      try {
+        var q = JSON.parse(localStorage.getItem(CLOSE_QUEUE_KEY) || "[]");
+        for (var i = q.length - 1; i >= 0; i--){
+          if (String(q[i]?.payload?.jobId || "") === String(jid)) return q[i].payload;
+        }
+      } catch(e){}
+      return null;
+    }
+    function crCleanupRuntime(jid){
+      var prefix = "zentex_chk_v4_item_";
+      var jobPrefix = jid ? (prefix + jid + "_") : null;
+      try { localStorage.removeItem(KEY_FINAL_NOTE_CR); } catch(e){}
+      try { localStorage.removeItem(KEY_META_CR); } catch(e){}
+      try { localStorage.removeItem("currentInstandsetzungHeader"); } catch(e){}
+      try {
+        var toRemove = [];
+        for (var i = 0; i < localStorage.length; i++){
+          var k = localStorage.key(i);
+          if (!k) continue;
+          if (jobPrefix && k.startsWith(jobPrefix)) toRemove.push(k);
+          else if (k.startsWith(prefix)){
+            var rest = k.slice(prefix.length);
+            if (/^\d+$/.test(rest)) toRemove.push(k);
+          }
+        }
+        toRemove.forEach(function(k){ localStorage.removeItem(k); });
+      } catch(e){}
+      // Signaturen aufräumen
+      if (jid){
+        try { localStorage.removeItem("zentex_sig_" + jid + "_monteur_v1"); } catch(e){}
+        try { localStorage.removeItem("zentex_sig_" + jid + "_ansprech_v1"); } catch(e){}
+      }
+    }
+
+    function finalSubmitCheckliste(){
+      if (_crSubmitting) return;
+
+      var urlId = new URLSearchParams(window.location.search).get("id");
+      if (!urlId){ alert("Keine Job-ID vorhanden."); return; }
+
+      var allJobs = crGetJobs();
+      var job = allJobs.find(function(x){ return x && x.id === urlId; });
+      if (!job){ alert("Job nicht gefunden."); return; }
+
+      if (job.status === "done" || job.status === "synced"){
+        alert("Dieser Job wurde bereits abgeschlossen.");
+        return;
+      }
+
+      _crSubmitting = true;
+      var btns = document.querySelectorAll(".toolbar button");
+      btns.forEach(function(b){ b.disabled = true; });
+
+      var payload = crFindClosePayload(urlId);
+      if (!payload){
+        alert("Abschluss-Daten nicht gefunden. Bitte zurück zu done.html und erneut abschliessen.");
+        _crSubmitting = false;
+        btns.forEach(function(b){ b.disabled = false; });
+        return;
+      }
+
+      if (typeof ZentexSP === "undefined"){
+        alert("Sync-Modul nicht geladen. Abschluss wurde nicht übertragen.\nDaten bleiben lokal erhalten.");
+        crUpdateJob(urlId, { status: "prepared_for_submit", locked: false });
+        _crSubmitting = false;
+        btns.forEach(function(b){ b.disabled = false; });
+        return;
+      }
+
+      var btnSubmit = document.getElementById("btnFinalSubmit");
+      if(btnSubmit) btnSubmit.textContent = "PDF wird erzeugt…";
+
+      generateChecklistePdfBlob().then(function(pdfResult){
+        if(btnSubmit) btnSubmit.textContent = "Daten werden übertragen…";
+
+        // 🔧 FIX – pending_upload wird NICHT mehr hier gesetzt.
+        // Status wird erst nach erfolgreichem submitJob() im nächsten .then() gesetzt.
+
+        payload.pdfBlob = pdfResult.blob;
+        payload.pdfFileName = pdfResult.fileName;
+
+        return ZentexSP.submitJob(payload, "checkliste");
+      }).then(function(r){
+        console.log("Checkliste finalSubmit:", r.mode, r.jobId);
+        if (r.mode === "online"){
+          crUpdateJob(urlId, { status: "synced", locked: true, completedAt: Date.now() });
+        } else {
+          crUpdateJob(urlId, { status: "pending_upload", locked: true, completedAt: Date.now() });
+        }
+
+        crCleanupRuntime(urlId);
+        alert("Rapport abgeschlossen" + (r.mode === "online" ? " und synchronisiert." : ". Wird bei nächster Verbindung synchronisiert."));
+        window.location.href = "./final.html?id=" + encodeURIComponent(urlId);
+      }).catch(function(e){
+        console.warn("Checkliste finalSubmit Fehler:", e && e.message || e);
+        crUpdateJob(urlId, { status: "prepared_for_submit", locked: false });
+        alert("Fehler bei PDF oder Übertragung. Daten bleiben lokal erhalten.\nBitte erneut versuchen oder Verbindung prüfen.");
+      }).finally(function(){
+        _crSubmitting = false;
+        btns.forEach(function(b){ b.disabled = false; });
+        if(btnSubmit) btnSubmit.textContent = "✓ Endgültig abschliessen";
+      });
+    }
+
+    // ── Signatur-Anzeige im Rapport ───────────────────────────────────────────
+    function loadSignaturesForJob(jobId){
+      if(!jobId) return;
+      function sp(j, fb){ try{ return JSON.parse(j); }catch(e){ return fb; } }
+      const sigM = sp(localStorage.getItem("zentex_sig_" + jobId + "_monteur_v1"), null);
+      const sigA = sp(localStorage.getItem("zentex_sig_" + jobId + "_ansprech_v1"), null);
+      const imgM = document.getElementById("sigImgMonteur");
+      const imgA = document.getElementById("sigImgKunde");
+      if(imgM && sigM?.png){ imgM.src = sigM.png; imgM.classList.add("has-signature"); }
+      if(imgA && sigA?.png){ imgA.src = sigA.png; imgA.classList.add("has-signature"); }
+    }
+
+    // ── Rapport fit-to-screen (mobile) ────────────────────────────────────────
+    function fitRapportToScreen(){
+      if(document.body.classList.contains("pdf-mode")) return;
+      const content = document.getElementById("rapportContent");
+      if(!content) return;
+      content.style.transform = "none";
+      content.style.marginBottom = "0";
+      const w = content.getBoundingClientRect().width || content.scrollWidth;
+      const scale = Math.min(1, (window.innerWidth - 24) / w);
+      content.style.transformOrigin = "top center";
+      content.style.transform = "scale(" + scale + ")";
+      content.style.marginBottom = Math.round(content.scrollHeight * (scale - 1)) + "px";
+    }
+    window.addEventListener("resize", fitRapportToScreen);
+
+    // Init
+    if (window.currentReportData) {
+      renderReport(window.currentReportData);
+      requestAnimationFrame(fitRapportToScreen);
+    } else {
+      const urlId = new URLSearchParams(window.location.search).get("id");
+      if (urlId) {
+        loadFromLocalStorage();
+        loadSignaturesForJob(urlId);
+        requestAnimationFrame(fitRapportToScreen);
+      } else {
+        renderReport({});
+      }
+    }
+  </script>
+</body>
+</html>
